@@ -1,0 +1,7 @@
+prettytable
+colorama
+requests
+inputimeout
+pyarmor
+pyinstaller
+wakepy
