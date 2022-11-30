@@ -15,7 +15,9 @@ from wakepy import set_keepawake
 from constants import schema, base_url, api_book, api_search
 from models.config import Config, User
 from models.lesson import Lesson
-from util import clear, fake_ua, percentage_of
+from modules.console_util import clear
+from modules.math_util import percentage_of
+from modules.useragent import fake_ua
 
 # noinspection PyUnresolvedReferences
 requests.packages.urllib3.disable_warnings()

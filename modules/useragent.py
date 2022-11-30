@@ -1,4 +1,3 @@
-import os
 import random
 
 
@@ -14,11 +13,3 @@ def fake_ua():
          'Chrome/39.0.2171.95 Safari/537.36']
     return 'Mozilla/5.0 ' + a[random.randint(0, len(a) - 1)] + ' ' + b[random.randint(0, len(b) - 1)] + ' ' + c[
         random.randint(0, len(c) - 1)]
-
-
-def percentage_of(a, b):
-    return int((a / 100) * b)
-
-
-def clear():
-    os.system('cls') if os.name == 'nt' else os.system('clear')

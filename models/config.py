@@ -6,7 +6,7 @@ from typing import List
 import requests
 
 from constants import schema, base_url
-from util import fake_ua
+from modules.useragent import fake_ua
 
 
 class User:
