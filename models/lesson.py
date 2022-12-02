@@ -1,7 +1,15 @@
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
+from typing import List
 
 import colorama
+import requests
 from prettytable import PrettyTable
+
+from constants import schema, base_url, api_search
+from models.booking import Booking
+from models.config import Config
+from modules.useragent import fake_ua
 
 
 class Lesson:
@@ -68,11 +76,29 @@ class Lesson:
         return status
 
 
-class Booking:
-    def __init__(self, l_start, **kwargs):
-        self.available = kwargs.get('bookingAvailable')
-        self.can_book: bool = False if not self.available or str(
-            kwargs.get('bookingUserStatus')).lower() != 'canbook' else True
-        if self.available:
-            self.start: datetime = datetime.fromisoformat(kwargs.get('bookingOpensOn')).replace(tzinfo=None)
-            self.end: datetime = l_start - timedelta(minutes=kwargs.get('cancellationMinutesInAdvance'))
+def get_lessons(conf: Config, fr: int, to: int) -> List[Lesson]:
+    sub_url = 'calendar.'
+    api = f'?eventTypes=Class&facilityId={conf.get_user().facility}&toDate={to}&fromDate={fr}'
+    r = schema + sub_url + base_url + api_search + api
+    while True:
+        if conf.get_user().token is None or not conf.get_user().token:
+            conf.get_user().refresh()
+        headers = {"User-Agent": fake_ua(), "Authorization": f'Bearer {conf.get_user().token}'}
+        try:
+            with requests.Session() as s:
+                p = s.get(r, headers=headers, verify=False)
+            if p.status_code != 200:
+                print(f'Something bad happened: {p.status_code}')
+                conf.get_user().token = None
+                time.sleep(30)
+            else:
+                return [Lesson(**c) for c in p.json()]
+        except Exception:
+            print('Connection Error')
+
+
+def print_lessons(lessons: List[Lesson]):
+    ptc = PrettyTable(['I', 'Name', 'Teacher', 'Start', 'End', 'Status', 'Free'])
+    for ic, e in enumerate(lessons):
+        e.add_table_row(ic, ptc)
+    print(ptc)

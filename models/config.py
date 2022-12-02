@@ -1,54 +1,71 @@
-import base64
 import json
-import uuid
+import os
+from os.path import exists
 from typing import List
 
-import requests
+from models.user import User
 
-from constants import schema, base_url
-from modules.useragent import fake_ua
-
-
-class User:
-    def __init__(self, **kwargs):
-        self.usr: str = kwargs.get('usr')
-        self.pwd: str = kwargs.get('pwd')
-        self.facility: str = kwargs.get('facility')
-        self.user_id: str = None
-        self.token: str = None
-
-    def login(self):
-        sub_url = 'account.'
-        api = '/v2/admin/authentication/Login'
-        r = schema + sub_url + base_url + api
-        headers = {"User-Agent": fake_ua(), "Content-type": "application/json; charset=utf-8"}
-        payload = {"username": f"{self.usr}", "password": f"{self.pwd}"}
-        with requests.Session() as s:
-            p = s.post(r, data=json.dumps(payload), headers=headers, verify=False)
-        if p.status_code != 200:
-            raise SystemError('Unauthorized')
-        else:
-            r = p.json()
-            if r['token']:
-                b64d = base64.b64decode(r['token'].split('.')[0][:-1]).decode('utf-8').split('|')[6]
-                return r['token'], uuid.UUID(str(b64d))
-            else:
-                raise SystemError('Unauthorized')
-
-    def refresh(self):
-        self.token, self.user_id = self.login()
+config_filename = 'conf.json'
 
 
 class Config:
-
     def __init__(self, **kwargs):
-        self.choice = 0
-        self.users: List[User] = [User(**us) for us in kwargs.get('users')]
+        self.choice = None
+        if len(kwargs) > 0:
+            self.users: List[User] = [User(**us) for us in kwargs.get('users')]
+        else:
+            self.users: List[User] = []
 
     def set_user(self, c):
-        c = abs(int(c.strip()))
         if c < len(self.users):
             self.choice = c
 
     def get_user(self) -> User:
         return self.users[self.choice]
+
+
+def read_config() -> Config:
+    if exists(config_filename):
+        with open(config_filename, encoding='utf-8') as f:
+            try:
+                return Config(**json.loads(f.read()))
+            except Exception:
+                print('Error reading config')
+                os.remove(config_filename)
+    return Config()
+
+
+def write_config(config: Config):
+    with open(config_filename, 'w') as out:
+        json.dump(remove_none_values(config.__dict__), out, default=lambda o: o.__dict__, indent=2)
+
+
+def remove_none_values(d):
+    for key, value in list(d.items()):
+        if value is None:
+            del d[key]
+        elif isinstance(value, dict):
+            remove_none_values(value)
+        elif isinstance(value, list):
+            for lt in value:
+                if hasattr(lt, '__class__'):
+                    if isinstance(value, dict):
+                        remove_none_values(lt)
+                    else:
+                        remove_none_values(lt.__dict__)
+    return d
+
+
+def add_user(user: User) -> Config:
+    config = read_config()
+    config.users.append(user)
+    write_config(config)
+    return read_config()
+
+
+def remove_user(ui: int) -> Config:
+    config = read_config()
+    if len(config.users) > ui:
+        config.users.pop(ui)
+    write_config(config)
+    return read_config()
