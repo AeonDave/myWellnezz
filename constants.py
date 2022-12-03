@@ -2,7 +2,7 @@ import platform
 
 name = 'myWellnezz'
 author = 'x430n'
-version = '1.0.3'
+version = '1.0.4'
 os = platform.system()
 logo = f'''         
                     M""MMM""MMM""M          dP dP                                     
