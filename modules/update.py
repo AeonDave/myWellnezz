@@ -1,5 +1,8 @@
+import glob
 import os
+import subprocess
 import sys
+import time
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -16,9 +19,32 @@ def self_path():
         return os.path.abspath(__file__)
 
 
-def unzip(source: str, destination: str):
+def unzip(source: str, destination: str, delete: bool = False):
     with ZipFile(source, 'r') as z:
         z.extractall(destination)
+    if delete:
+        os.remove(source)
+
+
+def find_files(directory, pattern):
+    return glob.glob(os.path.join(directory, f'{pattern}*'))
+
+
+def write(destination: str, content: str):
+    with open(destination, "w") as f:
+        f.write(content)
+
+
+def delete_old_versions(directory: str, pattern: str, current_version: str):
+    files = find_files(directory, pattern)
+    c_version = SemVersion(current_version)
+    for d in files:
+        try:
+            version = SemVersion(os.path.splitext(d)[0].split('-')[-1])
+            if version < c_version:
+                os.remove(d)
+        except Exception:
+            os.remove(d)
 
 
 def update_github(user: str, project: str, local_version: str):
@@ -43,12 +69,15 @@ def update_github(user: str, project: str, local_version: str):
 
     if asset_url and asset_name:
         response = requests.get(asset_url)
-        maindir = os.path.dirname(self_path())
-        save_to = Path(os.path.join(maindir, asset_name))
-        save_to.write_bytes(response.content)
-        if save_to.exists():
-            unzip(str(save_to), maindir)
-            os.remove(str(save_to))
+        destination = os.path.dirname(self_path())
+        source = Path(os.path.join(destination, asset_name))
+        source.write_bytes(response.content)
+        if source.exists():
+            unzip(str(source), destination, True)
+            f = find_files(destination, constants.name)
+            if f:
+                subprocess.Popen(f[0])
+            time.sleep(2)
             sys.exit(0)
         else:
             return

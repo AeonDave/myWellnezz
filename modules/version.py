@@ -51,10 +51,10 @@ class SemVersion:
     def _build_precedence_key(self):
 
         prerelease_k = (MaxIdentifier(),)
+        build_k = (MaxIdentifier(),)
         if self.prerelease:
             prerelease_k = tuple(NumericIdentifier(part) if part.isdigit()
                                  else AlphaIdentifier(part) for part in self.prerelease)
-        build_k = (MaxIdentifier(),)
         if self.prerelease:
             build_k = tuple(NumericIdentifier(part) if part.isdigit()
                             else AlphaIdentifier(part) for part in self.build)
@@ -125,6 +125,31 @@ def has_leading_zero(value):
             and value != '0')
 
 
+class MaxIdentifier(object):
+
+    def __repr__(self):
+        return 'MaxIdentifier()'
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
+
+    def __lt__(self, other):
+        return False
+
+    def __gt__(self, other):
+        return True
+
+    def __le__(self, other):
+        if isinstance(other, self.__class__):
+            return self <= other
+        return False
+
+    def __ge__(self, other) -> bool:
+        if isinstance(other, self.__class__):
+            return self >= other
+        return True
+
+
 class NumericIdentifier(object):
     __slots__ = ['value']
 
@@ -149,31 +174,35 @@ class NumericIdentifier(object):
         else:
             return NotImplemented
 
-
-class MaxIdentifier(object):
-    __slots__ = []
-
-    def __repr__(self):
-        return 'MaxIdentifier()'
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__)
-
-    def __lt__(self, other):
-        return False
-
     def __gt__(self, other):
-        return True
+        if isinstance(other, MaxIdentifier):
+            return False
+        elif isinstance(other, AlphaIdentifier):
+            return False
+        elif isinstance(other, NumericIdentifier):
+            return self.value > other.value
+        else:
+            return NotImplemented
 
     def __le__(self, other):
-        if isinstance(other, self.__class__):
+        if isinstance(other, MaxIdentifier):
             return True
-        return False
+        elif isinstance(other, AlphaIdentifier):
+            return True
+        elif isinstance(other, NumericIdentifier):
+            return self.value <= other.value
+        else:
+            return NotImplemented
 
-    def __ge__(self, other):
-        if isinstance(other, self.__class__):
-            return True
-        return True
+    def __ge__(self, other) -> bool:
+        if isinstance(other, MaxIdentifier):
+            return False
+        elif isinstance(other, AlphaIdentifier):
+            return False
+        elif isinstance(other, NumericIdentifier):
+            return self.value >= other.value
+        else:
+            return NotImplemented
 
 
 class AlphaIdentifier(object):

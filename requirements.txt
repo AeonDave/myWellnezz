@@ -5,3 +5,4 @@ inputimeout
 pyarmor
 pyinstaller
 wakepy
+psutil

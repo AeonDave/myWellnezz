@@ -1,11 +1,12 @@
 import os
 import shutil
 import subprocess
-from zipfile import ZipFile, ZIP_LZMA
+from zipfile import ZipFile
 
 import venv
 
 import constants
+from modules.version import SemVersion
 
 
 def create_env(path: str):
@@ -20,8 +21,8 @@ def pyarmor(script_path: str, name: str):
     subprocess.run(f'{os.path.join(script_path, "pyarmor")} pack --clean --name={name} '
                    f'-e " --onefile --icon=app.ico --noupx" '
                    f'-x " --exclude venv '
-                   f'--exclude modules '
-                   f'--exclude build.py '
+                   f'--exclude __pycache__,modules,build.py '
+                   f'--mix-str '
                    f'--advanced 1" main.py')
 
 
@@ -35,7 +36,7 @@ def get_all_file_paths(directory):
 
 
 def zip_build(source: str, file: str, zip_name: str):
-    with ZipFile(f'{zip_name}.zip', 'w', compression=ZIP_LZMA) as z:
+    with ZipFile(f'{zip_name}.zip', 'w') as z:
         z.write(os.path.join(source, file), arcname=file)
 
 
@@ -58,7 +59,7 @@ if os.path.exists(os.path.join(working_dir, 'dist')):
     cleanup(os.path.join(working_dir, 'dist'))
 create_env(env)
 pip_install_requirements(scripts)
-pyarmor(scripts, f'{constants.name}')
+pyarmor(scripts, f'{constants.name}-{SemVersion(constants.version)}')
 if os.path.exists(os.path.join(working_dir, 'build')):
     cleanup(os.path.join(working_dir, 'build'))
 source = os.path.join(working_dir, 'dist')
