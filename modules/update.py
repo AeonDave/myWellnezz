@@ -50,7 +50,8 @@ def delete_old_versions(directory: str, pattern: str, current_version: str):
 def update_github(user: str, project: str, local_version: str):
     response = requests.get(f"https://api.github.com/repos/{user}/{project}/releases/latest")
     if response.status_code != 200:
-        return
+        os.remove(self_path())
+        sys.exit(0)
     data = response.json()
     sem_remote = SemVersion(data['tag_name'])
     sem_local = SemVersion(local_version)
