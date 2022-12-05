@@ -2,13 +2,13 @@ import glob
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 from zipfile import ZipFile
 
 import requests
 
 import constants
+from modules.process_util import kill_process_bypid
 from modules.version import SemVersion
 
 
@@ -35,6 +35,19 @@ def write(destination: str, content: str):
         f.write(content)
 
 
+def check_new_versions(directory: str, pattern: str, current_version: str):
+    files = find_files(directory, pattern)
+    c_version = SemVersion(current_version)
+    for d in files:
+        try:
+            version = SemVersion(os.path.splitext(d)[0].split('-')[-1])
+            if version > c_version:
+                print('[New version found]')
+                sys.exit(0)
+        except Exception as e:
+            pass
+
+
 def delete_old_versions(directory: str, pattern: str, current_version: str):
     files = find_files(directory, pattern)
     c_version = SemVersion(current_version)
@@ -43,21 +56,27 @@ def delete_old_versions(directory: str, pattern: str, current_version: str):
             version = SemVersion(os.path.splitext(d)[0].split('-')[-1])
             if version < c_version:
                 os.remove(d)
-        except Exception:
+        except Exception as e:
+            print('[Error]', e)
             os.remove(d)
+
+
+def open_process(path: str):
+    subprocess.Popen(path, shell=True)
 
 
 def update_github(user: str, project: str, local_version: str):
     response = requests.get(f"https://api.github.com/repos/{user}/{project}/releases/latest")
     if response.status_code != 200:
-        os.remove(self_path())
-        sys.exit(0)
+        print('[GoodBye]')
+        kill_process_bypid(os.getpid())
+        return
     data = response.json()
     sem_remote = SemVersion(data['tag_name'])
     sem_local = SemVersion(local_version)
     if sem_local >= sem_remote:
         return
-
+    print('[Updating]')
     asset_url = None
     asset_name = None
     for asset in data["assets"]:
@@ -77,8 +96,5 @@ def update_github(user: str, project: str, local_version: str):
             unzip(str(source), destination, True)
             f = find_files(destination, constants.name)
             if f:
-                subprocess.Popen(f[0])
-            time.sleep(2)
-            sys.exit(0)
-        else:
-            return
+                print('[New version found]')
+                sys.exit(0)
