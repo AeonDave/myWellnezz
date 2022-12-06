@@ -4,7 +4,7 @@ import constants
 
 
 def clear():
-    os.system('cls') if os.name == 'nt' else os.system('clear')
+    os.system('cls') if os.name == 'nt' else os.system('export TERM=linux && clear')
 
 
 def print_logo():

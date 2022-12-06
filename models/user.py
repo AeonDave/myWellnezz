@@ -1,8 +1,6 @@
 import base64
 import json
-import msvcrt
 import re
-import sys
 import uuid
 
 import requests
@@ -23,22 +21,19 @@ class User:
         self.token: str = None
 
     def login(self):
-        sub_url = 'account.'
-        api = '/v2/admin/authentication/Login'
-        r = schema + sub_url + base_url + api
+        r = f'{schema}account.{base_url}/v2/admin/authentication/Login'
         headers = {"User-Agent": fake_ua(), "Content-type": "application/json; charset=utf-8"}
         payload = {"username": f"{self.usr}", "password": f"{self.pwd}"}
         with requests.Session() as s:
             p = s.post(r, data=json.dumps(payload), headers=headers, verify=False)
         if p.status_code != 200:
             return False, None, None
+        r = p.json()
+        if r['token']:
+            b64d = base64.b64decode(r['token'].split('.')[0][:-1]).decode('utf-8').split('|')[6]
+            return True, r['token'], uuid.UUID(str(b64d))
         else:
-            r = p.json()
-            if r['token']:
-                b64d = base64.b64decode(r['token'].split('.')[0][:-1]).decode('utf-8').split('|')[6]
-                return True, r['token'], uuid.UUID(str(b64d))
-            else:
-                return False, None, None
+            return False, None, None
 
     def refresh(self):
         logged, self.token, self.user_id = self.login()
@@ -51,16 +46,7 @@ def create_user() -> User:
         user.usr = input('Insert username:\n').replace(" ", "").strip()
         if re.fullmatch(email_re, user.usr):
             break
-
-    print('Insert password:')
-    user.pwd = ''
-    while True:
-        x = msvcrt.getch()
-        if x.decode() == '\r':
-            break
-        sys.stdout.write('*')
-        user.pwd += x.decode()
-    print('\n')
+    user.pwd = input('Insert Password:\n')
     user.facility = input('Insert Gym ID:\n').replace(" ", "").strip()
     return user
 

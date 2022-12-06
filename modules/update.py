@@ -94,7 +94,10 @@ def update_github(user: str, project: str, local_version: str):
         source.write_bytes(response.content)
         if source.exists():
             unzip(str(source), destination, True)
-            f = find_files(destination, constants.name)
-            if f:
+            if f := find_files(destination, constants.name):
                 print('[New version found]')
+                subprocess.Popen("while ps -p %d >/dev/null; do sleep 1; done; ( %s & )"
+                                 % (os.getpid(), f[0]),
+                                 shell=True)
                 sys.exit(0)
+
