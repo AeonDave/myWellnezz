@@ -1,208 +1,136 @@
-import json
-import threading
-import time
+import asyncio
+from asyncio import Task
 from datetime import datetime, timedelta
 from random import randint
-from typing import List
+from typing import Optional, Dict
 
-import requests
-from inputimeout import TimeoutOccurred, inputimeout
-from wakepy import set_keepawake
-
-from constants import schema, base_url, api_book
-from models.config import read_config, add_user, Config, remove_user
-from models.lesson import Lesson, get_lessons, print_lessons
-from models.user import print_users, create_user, User
-from modules.console_util import clear, print_logo, print_progress_bar
+from models.event import Event, update_events, action_event
+from models.facility import Facility
+from models.usercontext import UserContext
+from modules.console_util import print_events
 from modules.math_util import percentage_of
-from modules.useragent import fake_ua
-
-# noinspection PyUnresolvedReferences
-requests.packages.urllib3.disable_warnings()
 
 
 class MyWellnezz:
-    def __init__(self, **kwargs):
-        self.p_thread: threading.Thread = None
-        self.threads: dict = {}
-        self.lessons: list[Lesson] = []
-        self.lock = threading.Lock()
-        self.timeout = 30
-        self.long_cycle = 20
-        self.small_cycle = 1
-        self.cycle_timeout = self.long_cycle * 60
+    def __init__(self):
+        self.lesson_update_task: Optional[Task] = None
+        self.print_task: Optional[Task] = None
+        self.book_tasks: Dict[str, Task] = {}
+        self.events: Dict[str, Event] = {}
+        self.lock_events = asyncio.Lock()
+        self.lock_tasks = asyncio.Lock()
+        self.long_cycle = 60 * 10
+        self.small_cycle = 30
+        self.cycle_timeout = self.long_cycle
         self.cycle_iteration = 1
         self.run = True
+        self.test = False
 
-    def update_timeout(self):
-        if len(self.threads) == 0:
-            x = percentage_of(self.long_cycle * 60, 15)
-            self.cycle_timeout = self.long_cycle * 60 + randint(-x, x)
-            self.cycle_iteration = 1
-        else:
-            x = percentage_of(self.small_cycle * 60, 15)
-            self.cycle_timeout = self.small_cycle * 60 + randint(-x, x)
-            self.cycle_iteration = 1
+    async def get_events(self) -> Dict[str, Event]:
+        async with self.lock_events:
+            return self.events
 
-    def clean_threads(self):
-        for t in self.threads.copy():
-            if not self.threads[t].is_alive():
-                self.threads[t].join()
-                self.threads.pop(t)
-            else:
-                with self.lock:
-                    for ll in self.lessons:
-                        if ll.id == t and not ll.is_participant:
-                            ll.status = "Booking"
-                            break
+    async def get_event(self, idx: str) -> Event:
+        async with self.lock_events:
+            return self.events[idx]
 
-    def book_lesson(self, user: User, lesson: Lesson):
-        sub_url = 'calendar.'
-        r = schema + sub_url + base_url + api_book
-        booked = False
-        while not booked:
-            with self.lock:
-                cb = [x for x in self.lessons if x.id == lesson.id]
-            if len(cb) != 1:
-                print('Class not found!')
-                break
-            lesson = cb[0]
-            if lesson.ended:
-                print('Class ended')
-                break
-            if lesson.booking_info.can_book and not lesson.is_participant:
-                if user.token is None or not user.token:
-                    user.refresh()
-                headers = {"User-Agent": fake_ua(), "Content-type": "application/json; charset=utf-8",
-                           "Authorization": f'Bearer {user.token}'}
-                payload = {"ClassId": f"{lesson.id}", "PartitionDate": lesson.partition_date,
-                           "UserId": f"{user.user_id}"}
-                try:
-                    with requests.Session() as s:
-                        p = s.post(r, data=json.dumps(payload), headers=headers, verify=False)
-                    if p.status_code != 200:
-                        print(f'Something bad happened: {p.status_code}')
-                        user.token = None
-                    else:
-                        r = p.json()
-                        if r['result']:
-                            booked = r['result'] and r['result'].lower() == 'booked'
-                        else:
-                            raise SystemError(f'What is this? {r}')
-                except Exception:
-                    print('Connection Error')
-                    time.sleep(60)
-            elif (not lesson.is_participant
-                  and (lesson.booking_info.start - timedelta(minutes=30)) < datetime.now() < lesson.booking_info.end
-                  and self.cycle_timeout > 5 * 60 + 50):
-                self.update_timeout()
-            time.sleep(5)
+    async def set_events(self, user: UserContext, facility: Facility):
+        async with self.lock_events:
+            d = int((datetime.now()).strftime("%Y%m%d"))
+            self.events = {k: v for k, v in (await update_events(user, facility, d)).items() if not v.is_ended()}
 
-    @staticmethod
-    def set_option(config: Config):
-        opt = 0
+    async def get_event_id_by_index(self, index: int) -> Optional[str]:
+        ev = await self.get_events()
+        return next((key for i, key in enumerate(ev.keys()) if i == abs(index)), None)
+
+    async def get_last_status_event(self, status: str) -> str:
+        tasks = await self.get_book_tasks()
+        if len(tasks) > 0:
+            return ''
+        events = await self.get_events()
+        event = None
+        for i, value in enumerate(events.values()):
+            if value.get_status().lower() == status.lower():
+                event = str(i)
+        return event
+
+    async def set_event_status(self, idx: str, status: str) -> None:
+        (await self.get_event(idx)).status = status
+
+    async def set_book_task(self, user: UserContext, facility: Facility, key: str):
+        if key in self.book_tasks and not self.book_tasks[key].done():
+            return
+        self.book_tasks[key] = asyncio.create_task(self._book_event_loop(user, facility, key))
+
+    async def get_book_tasks(self) -> Dict[str, Task]:
+        async with self.lock_tasks:
+            return self.book_tasks
+
+    async def get_book_task(self, idx: str) -> Task:
+        async with self.lock_tasks:
+            return self.book_tasks[idx]
+
+    async def pop_book_task(self, idx: str) -> None:
+        async with self.lock_tasks:
+            self.book_tasks.pop(idx)
+
+    def set_event_task(self, user: UserContext, facility: Facility):
+        if self.print_task is None or self.print_task.done():
+            self.print_task = asyncio.create_task(self._events_loop(user, facility))
+
+    async def _book_event_loop(self, user: UserContext, facility: Facility, key: str):
+        event = None
+        e_count = 0
         while True:
-            len_users = len(config.users)
             try:
-                opt = abs(int(input('Select option: ').strip()))
-                if opt > len_users + 1:
-                    print('Invalid value, retry')
-                    continue
-            except Exception:
-                print('Invalid value, retry')
-                continue
-            if opt - len_users == 0:
-                config = add_user(create_user())
-            elif opt - len_users == 1:
-                if len_users == 0:
-                    print('No user to delete')
-                    continue
-                u_opt = int(input('Delete user: ').strip())
-                config = remove_user(u_opt)
-            else:
+                event = await self.get_event(key)
+                e_count = 0
+            except Exception as ex:
+                print(f'Class not found: {ex}')
+                e_count += 1
+            if e_count > 5 or not event or event.is_ended() or event.is_started() or event.is_participant:
                 break
-            clear()
-            print_logo()
-            print_users(config)
-        config.set_user(opt)
+            elif event.get_status().lower() == 'open':
+                if user.token is None or not user.token:
+                    await user.refresh()
+                if await action_event(user, event):
+                    await self.set_events(user, facility)
+                    break
+            await asyncio.sleep(3)
 
-    def manage_config(self) -> Config:
-        while True:
-            config = read_config()
-            if len(config.users) == 0:
-                clear()
-                print_logo()
-                print('No users found: Add user')
-                config = add_user(create_user())
-            clear()
-            print_logo()
-            print_users(config)
-            self.set_option(config)
-            if not config.get_user().refresh():
-                print('User with invalid credentials')
+    async def _events_loop(self, user: UserContext, facility: Facility):
+        while self.run:
+            await self.clean_tasks()
+            events = await self.get_events()
+            if len(events) == 0:
+                await self.set_events(user, facility)
+            elif await print_events(facility, user, await self.get_events(), self.cycle_iteration,
+                                    self.cycle_timeout):
+                await self.set_events(user, facility)
+                await self.set_loops_timeout()
+            self.cycle_iteration += 1
+            await asyncio.sleep(1)
+
+    async def set_loops_timeout(self):
+        tasks = await self.get_book_tasks()
+        cycle = self.long_cycle
+        if len(tasks) > 0:
+            events = await self.get_events()
+            task_events = {x: events[x] for x in events if x in tasks}
+            for event in task_events.values():
+                if (event.booking_opens_on - timedelta(minutes=30)) < datetime.now():
+                    cycle = self.small_cycle
+                    break
+        x = percentage_of(cycle, 15)
+        self.cycle_timeout = cycle + randint(-x, x)
+        self.cycle_iteration = 1
+
+    async def clean_tasks(self):
+        tasks = await self.get_book_tasks()
+        for t in tasks:
+            if (await self.get_book_task(t)).done():
+                await self.pop_book_task(t)
             else:
-                break
-        return config
-
-    def manage_print_thread(self, config: Config) -> List[Lesson]:
-        d1 = int((datetime.now()).strftime("%Y%m%d"))
-        d2 = int((datetime.now() + timedelta(days=1)).strftime("%Y%m%d"))
-        with self.lock:
-            lessons = get_lessons(config, d1, d2)
-            lessons = [x for x in lessons if not x.ended]
-        if self.p_thread is None or not self.p_thread.is_alive():
-            self.p_thread = threading.Thread(target=self.print_thread)
-            self.p_thread.start()
-        return lessons
-
-    def manage_threaded_input(self) -> str:
-        try:
-            print(self.cycle_timeout)
-            return inputimeout(timeout=self.cycle_timeout)
-        except TimeoutOccurred:
-            return None
-
-    def print_thread(self):
-        while self.run:
-            clear()
-            if len(self.lessons) > 0 or self.cycle_timeout > 0:
-                self.clean_threads()
-                print_logo()
-                with self.lock:
-                    print_lessons(self.lessons)
-                print_progress_bar(self.cycle_iteration, self.cycle_timeout, prefix='Next check in:',
-                                   suffix=f'{str(self.cycle_timeout - self.cycle_iteration)} '
-                                          f'seconds of {self.cycle_timeout}',
-                                   length=50)
-                self.cycle_iteration += 1
-                print('\nWanna Workout? Choose class!')
-            time.sleep(1)
-
-    def main(self):
-        config = self.manage_config()
-        self.timeout = 30
-        self.update_timeout()
-        set_keepawake(keep_screen_awake=False)
-        while self.run:
-            self.lessons = self.manage_print_thread(config)
-            index = self.manage_threaded_input()
-            self.update_timeout()
-            if index is not None and index.strip() != '':
-                try:
-                    index = int(index.strip())
-                    with self.lock:
-                        if len(self.lessons) - 1 >= index <= len(self.lessons) - 1:
-                            lx = self.lessons[index]
-                            if lx.status.lower() == 'open' or lx.status.lower() == 'full' \
-                                    or lx.status.lower() == 'planned':
-                                tr = threading.Thread(target=self.book_lesson, args=(config.get_user(), lx,))
-                                tr.start()
-                                self.threads[lx.id] = tr
-                            else:
-                                print('You cannot book that! are you blind?')
-                        else:
-                            print('Wrong value')
-                    time.sleep(2)
-                except Exception:
-                    print('Goodbye')
-                    self.run = False
+                lesson = await self.get_event(t)
+                if not lesson.is_participant:
+                    await self.set_event_status(t, "Booking")

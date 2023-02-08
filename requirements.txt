@@ -1,8 +1,11 @@
 prettytable
 colorama
 requests
-inputimeout
 pyarmor
 pyinstaller
 wakepy
 psutil
+aiohttp
+aioconsole
+Pillow
+pwinput

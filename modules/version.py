@@ -6,12 +6,12 @@ version_re = re.compile(r'^(\d+)\.(\d+)\.(\d+)(?:-([0-9a-zA-Z.-]+))?(?:\+([0-9a-
 class SemVersion:
 
     def __init__(self, *args):
-        if len(args) == 0:
+        if not args:
             self.version: str = '0.0.0'
         elif len(args) == 1:
             self.version: str = args[0].strip()
         else:
-            self.major: int = args[0] if len(args) > 0 else ''
+            self.major: int = args[0] if args else ''
             self.minor: int = args[1] if len(args) > 1 else ''
             self.patch: int = args[2] if len(args) > 2 else ''
             self.prerelease: str = args[3].strip() if len(args) > 3 else None
@@ -82,40 +82,52 @@ class SemVersion:
             return NotImplemented
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
         return (
-                self.major == other.major
-                and self.minor == other.minor
-                and self.patch == other.patch
-                and (self.prerelease or ()) == (other.prerelease or ())
-                and (self.build or ()) == (other.build or ())
+            (
+                    self.major == other.major
+                    and self.minor == other.minor
+                    and self.patch == other.patch
+                    and (self.prerelease or ()) == (other.prerelease or ())
+                    and (self.build or ()) == (other.build or ())
+            )
+            if isinstance(other, self.__class__)
+            else NotImplemented
         )
 
     def __ne__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return tuple(self) != tuple(other)
+        return (
+            tuple(self) != tuple(other)
+            if isinstance(other, self.__class__)
+            else NotImplemented
+        )
 
     def __lt__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self._cmp_precedence_key < other._cmp_precedence_key
+        return (
+            self._cmp_precedence_key < other._cmp_precedence_key
+            if isinstance(other, self.__class__)
+            else NotImplemented
+        )
 
     def __le__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self._cmp_precedence_key <= other._cmp_precedence_key
+        return (
+            self._cmp_precedence_key <= other._cmp_precedence_key
+            if isinstance(other, self.__class__)
+            else NotImplemented
+        )
 
     def __gt__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self._cmp_precedence_key > other._cmp_precedence_key
+        return (
+            self._cmp_precedence_key > other._cmp_precedence_key
+            if isinstance(other, self.__class__)
+            else NotImplemented
+        )
 
     def __ge__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        return self._cmp_precedence_key >= other._cmp_precedence_key
+        return (
+            self._cmp_precedence_key >= other._cmp_precedence_key
+            if isinstance(other, self.__class__)
+            else NotImplemented
+        )
 
 
 def has_leading_zero(value):
@@ -140,14 +152,10 @@ class MaxIdentifier(object):
         return True
 
     def __le__(self, other):
-        if isinstance(other, self.__class__):
-            return self <= other
-        return False
+        return self <= other if isinstance(other, self.__class__) else False
 
     def __ge__(self, other) -> bool:
-        if isinstance(other, self.__class__):
-            return self >= other
-        return True
+        return self >= other if isinstance(other, self.__class__) else True
 
 
 class NumericIdentifier(object):
@@ -165,9 +173,7 @@ class NumericIdentifier(object):
         return NotImplemented
 
     def __lt__(self, other):
-        if isinstance(other, MaxIdentifier):
-            return True
-        elif isinstance(other, AlphaIdentifier):
+        if isinstance(other, (MaxIdentifier, AlphaIdentifier)):
             return True
         elif isinstance(other, NumericIdentifier):
             return self.value < other.value
@@ -175,9 +181,7 @@ class NumericIdentifier(object):
             return NotImplemented
 
     def __gt__(self, other):
-        if isinstance(other, MaxIdentifier):
-            return False
-        elif isinstance(other, AlphaIdentifier):
+        if isinstance(other, (MaxIdentifier, AlphaIdentifier)):
             return False
         elif isinstance(other, NumericIdentifier):
             return self.value > other.value
@@ -185,9 +189,7 @@ class NumericIdentifier(object):
             return NotImplemented
 
     def __le__(self, other):
-        if isinstance(other, MaxIdentifier):
-            return True
-        elif isinstance(other, AlphaIdentifier):
+        if isinstance(other, (MaxIdentifier, AlphaIdentifier)):
             return True
         elif isinstance(other, NumericIdentifier):
             return self.value <= other.value
@@ -195,9 +197,7 @@ class NumericIdentifier(object):
             return NotImplemented
 
     def __ge__(self, other) -> bool:
-        if isinstance(other, MaxIdentifier):
-            return False
-        elif isinstance(other, AlphaIdentifier):
+        if isinstance(other, (MaxIdentifier, AlphaIdentifier)):
             return False
         elif isinstance(other, NumericIdentifier):
             return self.value >= other.value

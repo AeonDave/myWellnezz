@@ -1,3 +1,4 @@
+import contextlib
 import glob
 import os
 import subprocess
@@ -39,13 +40,11 @@ def check_new_versions(directory: str, pattern: str, current_version: str):
     files = find_files(directory, pattern)
     c_version = SemVersion(current_version)
     for d in files:
-        try:
+        with contextlib.suppress(Exception):
             version = SemVersion(os.path.splitext(d)[0].split('-')[-1])
             if version > c_version:
                 print('[New version found]')
                 sys.exit(0)
-        except Exception as e:
-            pass
 
 
 def delete_old_versions(directory: str, pattern: str, current_version: str):
@@ -94,10 +93,6 @@ def update_github(user: str, project: str, local_version: str):
         source.write_bytes(response.content)
         if source.exists():
             unzip(str(source), destination, True)
-            if f := find_files(destination, constants.name):
+            if _ := find_files(destination, constants.name):
                 print('[New version found]')
-                subprocess.Popen("while ps -p %d >/dev/null; do sleep 1; done; ( %s & )"
-                                 % (os.getpid(), f[0]),
-                                 shell=True)
                 sys.exit(0)
-
