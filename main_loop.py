@@ -2,7 +2,7 @@ import asyncio
 import locale
 from datetime import timedelta, datetime
 from locale import setlocale
-from typing import Any
+from typing import Any, Union
 
 import aioconsole as aioconsole
 from wakepy import set_keepawake
@@ -14,7 +14,7 @@ from models.usercontext import create_user, UserContext
 from modules.console_util import print_clear_logo, print_users, print_missing_facility, print_facilities
 
 
-async def get_config(mw: MyWellnezz) -> Config | Any:
+async def get_config(mw: MyWellnezz) -> Union[Config, Any]:
     config = read_config()
     while True:
         if len(config.users) == 0:
@@ -22,15 +22,14 @@ async def get_config(mw: MyWellnezz) -> Config | Any:
             config = add_user(await create_user())
         await set_user_option(mw, config)
         user = config.get_user()
-        if user.token_gen is None or (user.token_gen + timedelta(hours=1)) < datetime.now():
-            logged, user = await config.get_user().refresh()
-            if not logged:
-                print('User with invalid credentials')
-                remove_user(config.user_choice)
-            else:
-                config.set_user(user, config.user_choice, True)
-                break
+        if user.token_gen is not None and user.token_gen + timedelta(hours=1) >= datetime.now():
+            break
+        logged, user = await config.get_user().refresh()
+        if not logged:
+            print('User with invalid credentials')
+            remove_user(config.user_choice)
         else:
+            config.set_user(user, config.user_choice, True)
             break
     if len(user.facilities) == 0:
         print_missing_facility()
@@ -46,7 +45,7 @@ def get_input(mw: MyWellnezz, inp: str):
         if not mw.test:
             opt = input(inp).strip()
         if not opt or not opt.isnumeric():
-            print(f'Invalid value, retry')
+            print('Invalid value, retry')
             continue
         return 0 if mw.test else abs(int(opt))
 
@@ -88,7 +87,7 @@ async def book_event(mw: MyWellnezz, user: UserContext, facility: Facility, key:
     try:
         event = await mw.get_event(key)
         status = event.get_status().lower()
-        if status == 'open' or status == 'full' or status == 'planned':
+        if status in ['open', 'full', 'planned']:
             await mw.set_book_task(user, facility, key)
         else:
             print('You cannot book that lesson')
@@ -104,9 +103,9 @@ async def numeric_action(mw: MyWellnezz, user: UserContext, facility: Facility, 
         print('Invalid input')
 
 
-async def main_loop(mw: MyWellnezz, config: Config | Any):
+async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
     if config is None or config.user_choice is None or config.facility_choice is None:
-        print(f'You are missing some mandatory information')
+        print('You are missing some mandatory information')
     else:
         while mw.run:
             try:
@@ -115,7 +114,7 @@ async def main_loop(mw: MyWellnezz, config: Config | Any):
                 mw.set_event_task(user, facility)
                 events = await mw.get_events()
                 if len(events) == 0:
-                    print(f'Looking for lessons...')
+                    print('Looking for lessons...')
                     await asyncio.sleep(2)
                 else:
                     index = await mw.get_last_status_event("full") if mw.test else (await aioconsole.ainput()).strip()
