@@ -1,71 +1,43 @@
-import datetime
 import json
 import os
-import uuid
 from os.path import exists
-from typing import Any
+from typing import List
 
-from models.facility import Facility
-from models.usercontext import UserContext
-from modules.math_util import write_obfuscation, read_obfuscation
+from models.user import User
 
 config_filename = 'conf.json'
 
 
 class Config:
     def __init__(self, **kwargs):
-        self.user_choice: int | Any = None
-        self.facility_choice: int | Any = None
+        self.choice = None
         if len(kwargs) > 0:
-            self.users: list[UserContext] = [UserContext(**us) for us in kwargs.get('users')]
+            self.users: List[User] = [User(**us) for us in kwargs.get('users')]
         else:
-            self.users: list[UserContext] = []
+            self.users: List[User] = []
 
-    def set_facility_choice(self, c):
-        if c < len(self.get_user().facilities):
-            self.facility_choice = c
-
-    def set_user_choice(self, c):
+    def set_user(self, c):
         if c < len(self.users):
-            self.user_choice = c
+            self.choice = c
 
-    def set_user(self, user: UserContext, choice: int, save: bool = False):
-        if choice < len(self.users):
-            self.users[choice] = user
-            if save:
-                write_config(self)
-
-    def get_user(self) -> UserContext:
-        return self.users[self.user_choice]
-
-    def get_facility(self) -> Facility:
-        return self.get_user().facilities[self.facility_choice]
+    def get_user(self) -> User:
+        return self.users[self.choice]
 
 
 def read_config() -> Config:
     if exists(config_filename):
         with open(config_filename, encoding='utf-8') as f:
             try:
-                txt = read_obfuscation(str(uuid.getnode()), f.read())
-                return Config(**json.loads(txt))
-            except Exception as ex:
-                print(f'Error reading config {ex}')
+                return Config(**json.loads(f.read()))
+            except Exception:
+                print('Error reading config')
                 os.remove(config_filename)
     return Config()
 
 
 def write_config(config: Config):
     with open(config_filename, 'w') as out:
-        txt = write_obfuscation(str(uuid.getnode()),
-                                json.dumps(remove_none_values(config.__dict__), default=json_default, indent=2))
-        out.write(txt)
-
-
-def json_default(value):
-    if isinstance(value, datetime.date):
-        return value.isoformat()
-    else:
-        return value.__dict__
+        json.dump(remove_none_values(config.__dict__), out, default=lambda o: o.__dict__, indent=2)
 
 
 def remove_none_values(d):
@@ -84,7 +56,7 @@ def remove_none_values(d):
     return d
 
 
-def add_user(user: UserContext) -> Config:
+def add_user(user: User) -> Config:
     config = read_config()
     config.users.append(user)
     write_config(config)

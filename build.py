@@ -1,8 +1,9 @@
 import os
 import shutil
 import subprocess
-import venv
 from zipfile import ZipFile
+
+import venv
 
 import constants
 from modules.version import SemVersion
