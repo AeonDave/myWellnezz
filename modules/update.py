@@ -52,8 +52,12 @@ def delete_old_versions(directory: str, pattern: str, current_version: str):
     c_version = SemVersion(current_version)
     for d in files:
         try:
-            version = SemVersion(os.path.basename(d).split('-')[-1])
+            vers = os.path.basename(d).split('-')[-1]
+            if d.endswith('.exe'):
+                vers = os.path.splitext(vers)[0]
+            version = SemVersion(vers)
             if version < c_version:
+                print(f'[Current versions is old: {version}]')
                 os.remove(d)
         except Exception as e:
             print('[Error]', e)
