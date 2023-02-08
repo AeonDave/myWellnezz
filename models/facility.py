@@ -1,0 +1,17 @@
+class Facility:
+    def __init__(self, **kwargs):
+        self.id: str = kwargs.get('id')
+        self.url: str = kwargs.get('url')
+        self.name: str = kwargs.get('name')
+        self.address: str = kwargs.get('address')
+        self.website: str = kwargs.get('website')
+        # self.languageId: int = kwargs.get('languageId')
+        self.phone_number: str = kwargs.get('phoneNumber') or kwargs.get('phone_number')
+        # self.is_chain: bool = kwargs.get('isChain')
+        # self.customerLogicalId: int = kwargs.get('customerLogicalId')
+        # self.doNotJoinUsers: bool = kwargs.get('doNotJoinUsers')
+        # self.virtual: bool = kwargs.get('virtual')
+        # self.has_wellness_system: bool = kwargs.get('hasWellnessSystem')
+        # self.is_my_trainer: bool = kwargs.get('isMyTrainer')
+        self.logo_url: str = kwargs.get('logoUrl') or kwargs.get('logo_url')
+        # self.is_demo: bool = kwargs.get('isDemo')
