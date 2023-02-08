@@ -1,5 +1,6 @@
 import asyncio
 import locale
+import sys
 from datetime import timedelta, datetime
 from locale import setlocale
 from typing import Any, Union
@@ -132,5 +133,6 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
 
 def main(self):
     set_keepawake(keep_screen_awake=False)
-    setlocale(locale.LC_TIME, locale.getdefaultlocale()[0])
+    if sys.platform.startswith('win'):
+        setlocale(locale.LC_TIME, locale.getdefaultlocale()[0])
     asyncio.run(main_loop(self, asyncio.run(get_config(self))))

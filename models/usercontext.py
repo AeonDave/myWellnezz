@@ -89,10 +89,10 @@ class UserContext:
         }
         try:
             response = await async_post(url, headers, payload)
-            if response and response["errors"]:
+            if response and 'errors' in response:
                 print(f'Error: {response["errors"][0]["errorMessage"]}')
                 return False, None
-            if response and response['data'] and response['token']:
+            if response and ('data' and 'token') in response:
                 response['data']['userContext']['facilities'] = response['data']['facilities']
                 user = UserContext(**response['data']['userContext'])
                 user.set_token(response['token'], response['expireIn'])
