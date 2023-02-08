@@ -22,9 +22,9 @@ def pip_install_requirements(env_path: str):
 
 
 def pyarmor(e: str, script_path: str, name: str):
-    pyarm = 'pyarmor'
+    pyarm = 'pyarmor' + ext
     subprocess.run(
-        f'{os.path.join(script_path, python + ext)} {os.path.join(script_path, pyarm)} pack --clean --name={name} '
+        f'{os.path.join(script_path, pyarm)} pack --clean --name={name} '
         f'-e " --onefile --icon=app.ico --noupx" '
         f'-x " --exclude venv '
         f'--exclude __pycache__,modules,build.py '
@@ -43,7 +43,7 @@ def get_all_file_paths(directory):
 
 def zip_build(s: str, f: str, zip_name: str):
     with ZipFile(f'{zip_name}.zip', 'w') as z:
-        z.write(os.path.join(s, f), arcname=file)
+        z.write(os.path.join(s, f), arcname=f)
 
 
 def cleanup(d: str):
