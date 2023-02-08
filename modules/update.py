@@ -6,11 +6,11 @@ import sys
 from pathlib import Path
 from zipfile import ZipFile
 
-import requests
-
 import constants
 from modules.process_util import kill_process_bypid
+from modules.useragent import fake_ua_android
 from modules.version import SemVersion
+from modules.http_calls import async_get, async_raw_get
 
 
 def self_path():
@@ -52,7 +52,7 @@ def delete_old_versions(directory: str, pattern: str, current_version: str):
     c_version = SemVersion(current_version)
     for d in files:
         try:
-            version = SemVersion(os.path.splitext(d)[0].split('-')[-1])
+            version = SemVersion(os.path.basename(d).split('-')[-1])
             if version < c_version:
                 os.remove(d)
         except Exception as e:
@@ -64,21 +64,24 @@ def open_process(path: str):
     subprocess.Popen(path, shell=True)
 
 
-def update_github(user: str, project: str, local_version: str):
-    response = requests.get(f"https://api.github.com/repos/{user}/{project}/releases/latest")
-    if response.status_code != 200:
+async def update_github(user: str, project: str, local_version: str):
+    headers = {
+        "User-Agent": fake_ua_android(),
+        "Content-Type": "application/json; charset=utf-8"
+    }
+    response = await async_get(f"https://api.github.com/repos/{user}/{project}/releases/latest", headers)
+    if not response:
         print('[GoodBye]')
         kill_process_bypid(os.getpid())
         return
-    data = response.json()
-    sem_remote = SemVersion(data['tag_name'])
+    sem_remote = SemVersion(response['tag_name'])
     sem_local = SemVersion(local_version)
     if sem_local >= sem_remote:
         return
     print('[Updating]')
     asset_url = None
     asset_name = None
-    for asset in data["assets"]:
+    for asset in response["assets"]:
         asset_name = asset["name"]
         asset_split = asset_name.split('-')
         for e in asset_split:
@@ -87,10 +90,10 @@ def update_github(user: str, project: str, local_version: str):
                 break
 
     if asset_url and asset_name:
-        response = requests.get(asset_url)
+        response = await async_raw_get(asset_url, headers)
         destination = os.path.dirname(self_path())
         source = Path(os.path.join(destination, asset_name))
-        source.write_bytes(response.content)
+        source.write_bytes(response)
         if source.exists():
             unzip(str(source), destination, True)
             if _ := find_files(destination, constants.name):

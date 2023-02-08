@@ -22,22 +22,21 @@ async def async_post(url: str, headers: Dict[str, str], payload: Dict[str, str])
     return None
 
 
-async def async_get(url: str, headers: Dict[str, str]) -> []:
+async def async_get(url: str, headers: Dict[str, str]) -> Optional[dict]:
     if url is None or not url.strip():
         print('Url is invalid')
         return None
     try:
         async with aiohttp.ClientSession() as s:
             async with s.get(url, headers=headers) as p:
-                if p.status != 200:
-                    raise AuthException(f'Something bad happened: {p.status}')
-                else:
+                if p.status == 200:
                     return await p.json()
     except Exception as ex:
         print(f'Connection Error: {ex}')
+    return None
 
 
-async def async_image_get(url: str, headers: Dict[str, str]) -> Optional[bytes]:
+async def async_raw_get(url: str, headers: Dict[str, str]) -> Optional[bytes]:
     if url is None or not url.strip():
         print('Url is invalid')
         return None

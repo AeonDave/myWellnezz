@@ -4,7 +4,7 @@ from typing import Optional
 import colorama
 from PIL import Image
 
-from modules.http_calls import async_image_get
+from modules.http_calls import async_raw_get
 from modules.useragent import fake_ua_android
 
 
@@ -20,7 +20,7 @@ class AsciiArt:
 
     async def generate_ascii(self, url: str):
         headers = {"User-Agent": fake_ua_android()}
-        r = await async_image_get(url, headers)
+        r = await async_raw_get(url, headers)
         image = Image.open(BytesIO(r))
         return self._convert_to_ascii_art(image)
 
