@@ -10,13 +10,12 @@ from modules.version import SemVersion
 
 
 def create_env(path: str, remove: bool = False):
-    if os.path.exists(path) and remove:
+    if remove:
         print(f'        [Cleanup {path}]')
         shutil.rmtree(path)
     if not os.path.exists(path):
         print(f'        [Creating venv {path}]')
         venv.create(path, clear=True, with_pip=True)
-    # subprocess.run([python + ext, '-m', 'venv', path])
 
 
 def pip_install_requirements(env_path: str):
@@ -24,14 +23,14 @@ def pip_install_requirements(env_path: str):
     subprocess.check_call([os.path.join(env_path, python + ext), "-m", "pip", "install", "-r", "requirements.txt"])
 
 
-def pyarmor(e: str, script_path: str, name: str):
+def pyarmor(script_path: str, name: str):
     pyarm = f'pyarmor{ext}'
     main = 'main.py'
     ico = 'app.ico'
     xec = f'{os.path.join(script_path, pyarm)} pack --clean --name={name} ' \
           f'-e " --onefile --icon={ico} --noupx" ' \
           f'-x " --exclude venv,bin,build,dist,include,__pycache__,modules,build.py,config.json --mix-str --advanced 1" ' \
-          f'{os.path.join(e, f"{os.path.join(working_dir, main)}")}'
+          f'{main}'
     print(f'        [Packing with {pyarm}]')
     subprocess.run(xec)
 
@@ -67,9 +66,9 @@ else:
 print('        [Starting build]')
 if os.path.exists(os.path.join(working_dir, 'dist')):
     cleanup(os.path.join(working_dir, 'dist'))
-create_env(env, os.name == 'nt')
+create_env(env, True)
 pip_install_requirements(scripts)
-pyarmor(working_dir, scripts, f'{constants.name}-{SemVersion(constants.version)}')
+pyarmor(scripts, f'{constants.name}-{SemVersion(constants.version)}')
 if os.path.exists(os.path.join(working_dir, 'build')):
     cleanup(os.path.join(working_dir, 'build'))
 source = os.path.join(working_dir, 'dist')
