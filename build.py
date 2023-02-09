@@ -20,17 +20,17 @@ def create_env(path: str, remove: bool = False):
 
 
 def pip_install_requirements(env_path: str):
-    print(f'        [Installing requirements.txt]')
+    print('        [Installing requirements.txt]')
     subprocess.check_call([os.path.join(env_path, python + ext), "-m", "pip", "install", "-r", "requirements.txt"])
 
 
 def pyarmor(e: str, script_path: str, name: str):
-    pyarm = 'pyarmor' + ext
+    pyarm = f'pyarmor{ext}'
     main = 'main.py'
     ico = 'app.ico'
     xec = f'{os.path.join(script_path, pyarm)} pack --clean --name={name} ' \
           f'-e " --onefile --icon={ico} --noupx" ' \
-          f'-x " --exclude venv --exclude __pycache__,modules,build.py --mix-str --advanced 1" ' \
+          f'-x " --exclude venv,bin,build,dist,include,__pycache__,modules,build.py,config.json --mix-str --advanced 1" ' \
           f'{os.path.join(e, f"{os.path.join(working_dir, main)}")}'
     print(f'        [Packing with {pyarm}]')
     subprocess.run(xec)
@@ -46,7 +46,7 @@ def get_all_file_paths(directory):
 
 
 def zip_build(s: str, f: str, zip_name: str):
-    print(f'        [Zipping output]')
+    print('        [Zipping output]')
     with ZipFile(f'{zip_name}.zip', 'w') as z:
         z.write(os.path.join(s, f), arcname=f)
 
@@ -64,7 +64,7 @@ if os.name == 'nt':
     scripts = os.path.join(env, "Scripts")
 else:
     scripts = os.path.join(env, "bin")
-print(f'        [Starting build]')
+print('        [Starting build]')
 if os.path.exists(os.path.join(working_dir, 'dist')):
     cleanup(os.path.join(working_dir, 'dist'))
 create_env(env, os.name == 'nt')
