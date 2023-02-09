@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 import colorama
 from prettytable import PrettyTable
@@ -128,12 +128,13 @@ async def action_event(user: UserContext, event: Event) -> bool:
     }
     payload = {
         "partitionDate": event.partition_date,
-        "userId": user.id
+        "userId": user.id,
+        "token": user.token
     }
     try:
         response = await async_post(url, headers, payload)
         if not response:
-            print(f'Something bad happened: {response.status}')
+            print('Something bad happened')
         else:
             return bool(response['data'])
     except Exception as ex:
@@ -141,7 +142,7 @@ async def action_event(user: UserContext, event: Event) -> bool:
     return False
 
 
-async def update_events(user: UserContext, facility: Facility, start: int) -> Dict[str, Event]:
+async def update_events(user: UserContext, facility: Facility, start: int) -> Optional[Dict[str, Event]]:
     url = f'{schema}services.{base_url}{api_search_app}/{facility.id}/SearchCalendarEvents'
     while True:
         if user.token is None or not user.token:
@@ -159,11 +160,12 @@ async def update_events(user: UserContext, facility: Facility, start: int) -> Di
                 "token": user.token
             }
             response = await async_post(url, headers, payload)
-            if response or response['data']:
+            if response and 'errors' in response:
+                print(f'Error: {response["errors"][0]["errorMessage"]}')
+                return None
+            if response and 'data' in response:
                 return {Event(**e).id: Event(**e) for e in response['data']['eventItems']}
-            print(f'Something bad happened: {response.status}')
-            user.token = None
-            await asyncio.sleep(30)
         except Exception as ex:
             print(f'Connection Error {ex}')
-            await asyncio.sleep(180)
+            await asyncio.sleep(30)
+        return None

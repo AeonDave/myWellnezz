@@ -88,7 +88,7 @@ async def book_event(mw: MyWellnezz, user: UserContext, facility: Facility, key:
     try:
         event = await mw.get_event(key)
         status = event.get_status().lower()
-        if status in ['open', 'full', 'planned']:
+        if status in ['open', 'full', 'planned', 'booked', 'booking']:
             await mw.set_book_task(user, facility, key)
         else:
             print('You cannot book that lesson')

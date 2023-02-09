@@ -100,4 +100,7 @@ def _print_events(events: Dict[str, Event]):
 
 
 def _print_user(user: UserContext):
-    print(f'{user.first_name} {user.last_name}: {user.display_height}/{user.display_weight}')
+    name = f'{user.first_name} {user.last_name}: '
+    wh = f'{user.display_height}/{user.display_weight} '
+    updated = '' if user.modified_on is None else f'| last Update: {user.modified_on.strftime("%Y-%m-%d %H:%M")} '
+    print(name + wh + updated)

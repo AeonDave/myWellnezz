@@ -1,3 +1,4 @@
+import asyncio
 import re
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -34,6 +35,13 @@ class UserContext:
         self.display_height: str = kwargs.get('displayHeight') or kwargs.get('display_height')
         self.age: int = kwargs.get('age')
         self.picture_url: str = kwargs.get('pictureUrl') or kwargs.get('picture_url')
+        if kwargs.get('modifiedOn'):
+            self.modified_on: datetime = datetime.strptime(kwargs.get('modifiedOn'), '%Y-%m-%d %H:%M:%S %z') \
+                .replace(tzinfo=None)
+        elif kwargs.get('modified_on'):
+            self.modified_on: datetime = datetime.fromisoformat(kwargs.get('modified_on'))
+        else:
+            self.modified_on: None = None
         self.token: str = kwargs.get('token')
         self.token_expire: datetime = (
             datetime.fromisoformat(kwargs.get('token_expire'))
@@ -64,7 +72,6 @@ class UserContext:
         # self.is_email_valid: bool = kwargs.get('isEmailValid')
         # self.created_from_app: str = kwargs.get('createdFromApp')
         # self.can_be_multiple_user: bool = kwargs.get('canBeMultipleUser')
-        # self.modified_on: str = kwargs.get('modifiedOn') or kwargs.get('modified_on')
         # self.created_on: str = kwargs.get('createdOn') or kwargs.get('created_on')
         # self.cloud_creation_date: str = kwargs.get('cloudCreationDate')
         # self.has_tgs_data: bool = kwargs.get('hasTgsData')
@@ -100,6 +107,7 @@ class UserContext:
                 return True, user
         except Exception as ex:
             print(f'Connection Error: {ex}')
+            await asyncio.sleep(30)
         return False, None
 
     async def refresh(self):

@@ -59,6 +59,8 @@ class MyWellnezz:
 
     async def set_book_task(self, user: UserContext, facility: Facility, key: str):
         if key in self.book_tasks and not self.book_tasks[key].done():
+            self.book_tasks[key].cancel()
+            self.book_tasks.pop(key)
             return
         self.book_tasks[key] = asyncio.create_task(self._book_event_loop(user, facility, key))
 
@@ -88,9 +90,9 @@ class MyWellnezz:
             except Exception as ex:
                 print(f'Class not found: {ex}')
                 e_count += 1
-            if e_count > 5 or not event or event.is_ended() or event.is_started() or event.is_participant:
+            if e_count > 5 or not event or event.is_ended() or event.is_started():
                 break
-            elif event.get_status().lower() == 'open':
+            elif event.get_status().lower() == 'open' or event.is_participant:
                 if user.token is None or not user.token:
                     await user.refresh()
                 if await action_event(user, event):

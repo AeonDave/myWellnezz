@@ -3,7 +3,7 @@ import json
 import os
 import uuid
 from os.path import exists
-from typing import Any, Union, List
+from typing import List, Optional
 
 from models.facility import Facility
 from models.usercontext import UserContext
@@ -14,8 +14,8 @@ config_filename = 'conf.json'
 
 class Config:
     def __init__(self, **kwargs):
-        self.user_choice: Union[int, Any] = None
-        self.facility_choice: Union[int, Any] = None
+        self.user_choice: Optional[int] = None
+        self.facility_choice: Optional[int] = None
         if kwargs:
             self.users: List[UserContext] = [UserContext(**us) for us in kwargs.get('users')]
         else:
