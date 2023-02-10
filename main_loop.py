@@ -89,7 +89,7 @@ async def book_event(mw: MyWellnezz, user: UserContext, facility: Facility, key:
         event = await mw.get_event(key)
         status = event.get_status().lower()
         if status in ['open', 'full', 'planned', 'booked', 'booking']:
-            await mw.set_book_task(user, facility, key)
+            await mw.set_book_task(user, facility, key, event)
         else:
             print('You cannot book that lesson')
     except Exception as ex:
@@ -124,6 +124,7 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
                             await numeric_action(mw, user, facility, abs(int(index)), events)
                         else:
                             mw.run = False
+                            await asyncio.sleep(2)
                             break
                     await mw.set_loops_timeout()
                 await asyncio.sleep(1)

@@ -57,10 +57,11 @@ class MyWellnezz:
     async def set_event_status(self, idx: str, status: str) -> None:
         (await self.get_event(idx)).status = status
 
-    async def set_book_task(self, user: UserContext, facility: Facility, key: str):
+    async def set_book_task(self, user: UserContext, facility: Facility, key: str, event: Event):
         if key in self.book_tasks and not self.book_tasks[key].done():
             self.book_tasks[key].cancel()
             self.book_tasks.pop(key)
+            await self.set_event_status(key, event.get_status())
             return
         self.book_tasks[key] = asyncio.create_task(self._book_event_loop(user, facility, key))
 
@@ -135,4 +136,4 @@ class MyWellnezz:
             else:
                 lesson = await self.get_event(t)
                 if not lesson.is_participant:
-                    await self.set_event_status(t, "Booking")
+                    await self.set_event_status(t, 'Booking')
