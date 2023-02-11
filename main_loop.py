@@ -47,6 +47,7 @@ async def get_config(mw: MyWellnezz) -> Optional[Config]:
         else:
             config.set_user(user, config.user_choice, True)
             break
+    await asyncio.sleep(0.250)
     return config
 
 
@@ -55,7 +56,7 @@ def get_input(mw: MyWellnezz, inp: str):
     while True:
         if not mw.test:
             opt = input(inp).strip()
-        if not opt or not opt.isnumeric():
+        if not mw.test and (not opt or not opt.isnumeric()):
             print('Invalid value, retry')
             continue
         return 0 if mw.test else abs(int(opt))
@@ -138,8 +139,8 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
                 print(f'Error: {ex}')
 
 
-def main(self):
+def main(mw: MyWellnezz):
     set_keepawake(keep_screen_awake=False)
-    if sys.platform.startswith('win'):
+    if sys.platform.lower().startswith('win'):
         setlocale(locale.LC_TIME, locale.getdefaultlocale()[0])
-    asyncio.run(main_loop(self, asyncio.run(get_config(self))))
+    asyncio.run(main_loop(mw, asyncio.run(get_config(mw))), debug=mw.test)
