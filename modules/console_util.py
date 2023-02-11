@@ -35,20 +35,17 @@ def print_clear_logo():
 
 
 def print_missing_facility():
-    clear()
-    print_logo()
+    print_clear_logo()
     print('Sorry but you are not registered in any gym!')
 
 
 def print_users(config: Config):
-    clear()
-    print_logo()
+    print_clear_logo()
     _print_users(config)
 
 
 def print_facilities(config: Config):
-    clear()
-    print_logo()
+    print_clear_logo()
     _print_facilities(config)
 
 
@@ -71,8 +68,7 @@ def _print_facilities(config: Config):
 
 async def print_events(facility: Facility, user: UserContext, events: Dict[str, Event], iteration: int,
                        timeout: int) -> bool:
-    clear()
-    print_logo()
+    print_clear_logo()
     await _print_facility_logo(facility)
     _print_user(user)
     _print_events(events)

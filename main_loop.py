@@ -3,26 +3,41 @@ import locale
 import sys
 from datetime import timedelta, datetime
 from locale import setlocale
-from typing import Any, Union
+from typing import Any, Union, Optional
 
 import aioconsole as aioconsole
 from wakepy import set_keepawake
 
 from models.config import Config, read_config, add_user, remove_user
-from models.facility import Facility
+from models.facility import Facility, my_facilities
 from models.mywellnezz import MyWellnezz
 from models.usercontext import create_user, UserContext
-from modules.console_util import print_clear_logo, print_users, print_missing_facility, print_facilities
+from modules.console_util import print_missing_facility, print_facilities, print_users
 
 
-async def get_config(mw: MyWellnezz) -> Union[Config, Any]:
+async def get_config(mw: MyWellnezz) -> Optional[Config]:
     config = read_config()
     while True:
-        if len(config.users) == 0:
-            print_clear_logo()
+        print_users(config)
+        opt = get_input(mw, 'Select option: ')
+        if opt > len(config.users) + 1:
+            print('Invalid value, retry')
+            continue
+        if opt - len(config.users) == 0:
             config = add_user(await create_user())
-        await set_user_option(mw, config)
+            continue
+        elif opt - len(config.users) == 1:
+            if len(config.users) == 0:
+                print('No user to delete')
+                continue
+            u_opt = int(input('Delete user: ').strip())
+            config = remove_user(u_opt)
+        else:
+            config.set_user_choice(opt)
         user = config.get_user()
+        if not await set_user_facilities(mw, user, config):
+            print_missing_facility()
+            return None
         if user.token_gen is not None and user.token_gen + timedelta(hours=1) >= datetime.now():
             break
         logged, user = await config.get_user().refresh()
@@ -32,11 +47,6 @@ async def get_config(mw: MyWellnezz) -> Union[Config, Any]:
         else:
             config.set_user(user, config.user_choice, True)
             break
-    if len(user.facilities) == 0:
-        print_missing_facility()
-        return None
-    else:
-        await set_user_facility(mw, config)
     return config
 
 
@@ -51,25 +61,21 @@ def get_input(mw: MyWellnezz, inp: str):
         return 0 if mw.test else abs(int(opt))
 
 
-async def set_user_option(mw: MyWellnezz, config: Config):
-    print_users(config)
-    while True:
-        len_users = len(config.users)
-        opt = get_input(mw, 'Select user: ')
-        if opt > len_users + 1:
-            print('Invalid value, retry')
-            continue
-        if opt - len_users == 0:
-            config = add_user(await create_user())
-        elif opt - len_users == 1:
-            if len_users == 0:
-                print('No user to delete')
-                continue
-            u_opt = int(input('Delete user: ').strip())
-            config = remove_user(u_opt)
+async def set_user_facilities(mw: MyWellnezz, user: UserContext, config: Config):
+    user.facilities = await my_facilities(user)
+    if user.facilities is None or len(user.facilities) == 0:
+        return False
+    else:
+        print_facilities(config)
+        len_facilities = len(config.get_user().facilities)
+        if len_facilities > 1:
+            opt = get_input(mw, 'Select gym: ')
+        elif len_facilities == 1:
+            opt = 0
         else:
-            break
-    config.set_user_choice(opt)
+            raise ValueError('no facilities found')
+        config.set_facility_choice(opt)
+    return True
 
 
 async def set_user_facility(mw: MyWellnezz, config: Config):
@@ -88,7 +94,7 @@ async def book_event(mw: MyWellnezz, user: UserContext, facility: Facility, key:
     try:
         event = await mw.get_event(key)
         status = event.get_status().lower()
-        if status in ['open', 'full', 'planned', 'booked', 'booking']:
+        if status in ['open', 'full', 'planned', 'waitinglist', 'booked', 'booking']:
             await mw.set_book_task(user, facility, key, event)
         else:
             print('You cannot book that lesson')

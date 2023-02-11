@@ -1,3 +1,11 @@
+import asyncio
+from typing import List, Optional
+
+from constants import schema, base_url
+from modules.http_calls import async_post
+from modules.useragent import fake_ua_android
+
+
 class Facility:
     def __init__(self, **kwargs):
         self.id: str = kwargs.get('id')
@@ -15,3 +23,28 @@ class Facility:
         # self.has_wellness_system: bool = kwargs.get('hasWellnessSystem')
         # self.is_my_trainer: bool = kwargs.get('isMyTrainer')
         # self.is_demo: bool = kwargs.get('isDemo')
+
+
+from models.usercontext import UserContext
+
+
+async def my_facilities(user: UserContext) -> Optional[List[Facility]]:
+    url = f'{schema}services.{base_url}/Core/User/{user.id}/MyFacilities'
+    headers = {
+        "User-Agent": fake_ua_android(),
+        "Content-Type": "application/json; charset=utf-8"
+    }
+    payload = {
+        "token": f"{user.token}"
+    }
+    try:
+        response = await async_post(url, headers, payload)
+        if response and 'errors' in response:
+            print(f'Error: {response["errors"][0]["errorMessage"]}')
+            return None
+        if response and 'data' in response:
+            return [] if response['data']['facilities'] is None else [Facility(**f) for f in response['data']['facilities']]
+    except Exception as ex:
+        print(f'Connection Error: {ex}')
+        await asyncio.sleep(30)
+    return None

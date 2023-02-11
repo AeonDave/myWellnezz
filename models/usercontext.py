@@ -53,8 +53,7 @@ class UserContext:
             if kwargs.get('token_gen')
             else datetime.now()
         )
-        self.facilities: List[Facility] = [] if kwargs.get('facilities') is None else [Facility(**f) for f in
-                                                                                       kwargs.get('facilities')]
+        self.facilities: List[Facility] = []
         # self.credential_id: str = kwargs.get('credentialId') or kwargs.get('credential_id')
         # self.nick_name: str = kwargs.get('nickName')
         # self.birth_date: str = kwargs.get('birthDate')
