@@ -93,12 +93,7 @@ async def set_user_facility(mw: MyWellnezz, config: Config):
 
 async def book_event(mw: MyWellnezz, user: UserContext, facility: Facility, key: str):
     try:
-        event = await mw.get_event(key)
-        status = event.get_status().lower()
-        if status in ['open', 'full', 'planned', 'waitinglist', 'booked', 'booking']:
-            await mw.set_book_task(user, facility, key, event)
-        else:
-            print('You cannot book that lesson')
+        await mw.set_book_task(user, facility, await mw.get_event(key))
     except Exception as ex:
         print(f'Goodbye: {ex}')
         mw.run = False
@@ -118,8 +113,8 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
         while mw.run:
             try:
                 user = config.get_user()
-                facility = config.get_facility()
-                mw.set_event_task(user, facility)
+                facility = await config.get_facility()
+                mw.set_event_task(user, facility, config)
                 events = await mw.get_events()
                 if len(events) == 0:
                     print('Looking for lessons...')
@@ -133,7 +128,7 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
                             mw.run = False
                             await asyncio.sleep(2)
                             break
-                    await mw.set_loops_timeout()
+                    await mw.set_loops_timeout(events)
                 await asyncio.sleep(1)
             except Exception as ex:
                 print(f'Error: {ex}')

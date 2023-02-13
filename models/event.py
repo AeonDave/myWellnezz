@@ -120,6 +120,12 @@ class Event:
              color_status, self.available_places])
 
 
+async def check_event_diff(events: Dict[str, Event], new_events: Dict[str, Event]) -> set[str]:
+    owl = set([x for x in events if events[x].is_in_waiting_list])
+    nwl = set([x for x in new_events if new_events[x].is_in_waiting_list])
+    return owl - nwl
+
+
 async def action_event(user: UserContext, event: Event) -> bool:
     url = f'{schema}services.{base_url}{api_book_app}/{event.id}/{"unbook" if event.is_participant else "book"}'
     headers = {

@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import os
@@ -5,7 +6,7 @@ import uuid
 from os.path import exists
 from typing import List, Optional
 
-from models.facility import Facility
+from models.facility import Facility, my_facilities
 from models.usercontext import UserContext
 from modules.math_util import write_obfuscation, read_obfuscation
 
@@ -16,6 +17,7 @@ class Config:
     def __init__(self, **kwargs):
         self.user_choice: Optional[int] = None
         self.facility_choice: Optional[int] = None
+        self.auto_book: bool = True
         if kwargs:
             self.users: List[UserContext] = [UserContext(**us) for us in kwargs.get('users')]
         else:
@@ -38,8 +40,17 @@ class Config:
     def get_user(self) -> UserContext:
         return self.users[self.user_choice]
 
-    def get_facility(self) -> Facility:
-        return self.get_user().facilities[self.facility_choice]
+    async def get_facility(self) -> Facility:
+        if len(self.get_user().facilities) > self.facility_choice:
+            return self.get_user().facilities[self.facility_choice]
+        while True:
+            f = await my_facilities(self.get_user())
+            if not f or len(f) == 0:
+                print('No gym found')
+                await asyncio.sleep(2)
+                continue
+            self.get_user().facilities = f
+            return self.get_user().facilities[self.facility_choice]
 
 
 def read_config() -> Config:
