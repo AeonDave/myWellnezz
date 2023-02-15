@@ -129,13 +129,14 @@ class MyWellnezz:
 
     async def clean_tasks(self):
         try:
-            tasks = await self.get_book_tasks()
-            for t in tasks.copy():
-                if (await self.get_book_task(t)).done():
+            tasks = (await self.get_book_tasks()).copy()
+            for t in tasks:
+                bt = await self.get_book_task(t)
+                if bt and bt.done():
                     await self.pop_book_task(t)
                 else:
                     event = await self.get_event(t)
-                    if not event.is_participant:
-                        await self.set_event_status(t, 'Booking')
+                    if not event.is_participant and event.status != 'Booking':
+                        await self.set_event_status(event.id, 'Booking')
         except Exception as e:
             print(f'Error {e}')
