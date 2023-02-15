@@ -74,7 +74,7 @@ class MyWellnezz:
             self.print_task = asyncio.create_task(self._events_loop(user, facility, config))
 
     async def _book_event_loop(self, user: UserContext, facility: Facility, event: Event):
-        while True:
+        while self.run:
             try:
                 event = await self.get_event(event.id)
             except Exception as ex:
