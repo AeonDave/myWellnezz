@@ -50,9 +50,9 @@ class MyWellnezz:
         async with self.lock_tasks:
             return self.book_tasks
 
-    async def get_book_task(self, idx: str) -> Task:
+    async def get_book_task(self, idx: str) -> Optional[Task]:
         async with self.lock_tasks:
-            return self.book_tasks[idx]
+            return self.book_tasks[idx] if idx in self.book_tasks else None
 
     async def pop_book_task(self, idx: str) -> None:
         async with self.lock_tasks:
@@ -62,9 +62,9 @@ class MyWellnezz:
         if event.is_started():
             print(f'{event.name} is already started')
             return
-        if event.id in self.book_tasks and not self.book_tasks[event.id].done():
-            self.book_tasks[event.id].cancel()
-            self.book_tasks.pop(event.id)
+        if event.id in self.book_tasks and not (await self.get_book_task(event.id)).done():
+            (await self.get_book_task(event.id)).cancel()
+            await self.pop_book_task(event.id)
             await self.set_event_status(event.id, event.get_status())
             return
         self.book_tasks[event.id] = asyncio.create_task(self._book_event_loop(user, facility, event))
@@ -128,11 +128,14 @@ class MyWellnezz:
         self.cycle_iteration = 1
 
     async def clean_tasks(self):
-        tasks = await self.get_book_tasks()
-        for t in tasks:
-            if (await self.get_book_task(t)).done():
-                await self.pop_book_task(t)
-            else:
-                lesson = await self.get_event(t)
-                if not lesson.is_participant:
-                    await self.set_event_status(t, 'Booking')
+        try:
+            tasks = await self.get_book_tasks()
+            for t in tasks.copy():
+                if (await self.get_book_task(t)).done():
+                    await self.pop_book_task(t)
+                else:
+                    event = await self.get_event(t)
+                    if not event.is_participant:
+                        await self.set_event_status(t, 'Booking')
+        except Exception as e:
+            print(f'Error {e}')
