@@ -38,7 +38,7 @@ async def get_config(mw: MyWellnezz) -> Optional[Config]:
         if not await set_user_facilities(mw, user, config):
             print_missing_facility()
             return None
-        if user.token_gen is not None and user.token_gen + timedelta(hours=1) >= datetime.now():
+        if user.token_expire is not None and user.token_expire - timedelta(weeks=8) >= datetime.now():
             break
         logged, user = await config.get_user().refresh()
         if not logged:
@@ -47,7 +47,7 @@ async def get_config(mw: MyWellnezz) -> Optional[Config]:
         else:
             config.set_user(user, config.user_choice, True)
             break
-    await asyncio.sleep(0.250)
+    await asyncio.sleep(0)
     return config
 
 
@@ -117,25 +117,30 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
                 mw.set_event_task(user, facility, config)
                 events = await mw.get_events()
                 if len(events) == 0:
-                    print('Looking for lessons...')
+                    print('[Looking for lessons...]')
                     await asyncio.sleep(2)
                 else:
-                    index = await mw.get_last_status_event("full") if mw.test else (await aioconsole.ainput()).strip()
+                    index = (await aioconsole.ainput()).strip()
                     if index != '':
                         if index.isnumeric():
                             await numeric_action(mw, user, facility, abs(int(index)), events)
                         else:
+                            print('[Closing...]')
                             mw.run = False
-                            await asyncio.sleep(2)
+                            await asyncio.gather(mw.print_task)
+                            await asyncio.gather(*mw.book_tasks.values())
                             break
                     await mw.set_loops_timeout(events)
                 await asyncio.sleep(1)
             except Exception as ex:
                 print(f'Error: {ex}')
+        await asyncio.sleep(0)
 
 
-def main(mw: MyWellnezz):
+def main():
+    mw = MyWellnezz()
     set_keepawake(keep_screen_awake=False)
     if sys.platform.lower().startswith('win'):
         setlocale(locale.LC_TIME, locale.getdefaultlocale()[0])
-    asyncio.run(main_loop(mw, asyncio.run(get_config(mw))), debug=mw.test)
+    c = asyncio.run(get_config(mw))
+    asyncio.run(main_loop(mw, c), debug=mw.test)

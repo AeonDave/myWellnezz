@@ -115,15 +115,15 @@ class Event:
         elif self.status == 'Ended':
             color_status = colorama.Fore.RED + self.status + colorama.Style.RESET_ALL
         table.add_row(
-            [index, self.name, self.assigned_to, self.room, self.start.strftime('%A %d %H:%M'),
+            [index, self.name, self.assigned_to, self.room, self.start.strftime('%A %d %H:%M').capitalize(),
              self.end.strftime('%H:%M'),
              color_status, self.available_places])
 
 
-async def check_event_diff(events: Dict[str, Event], new_events: Dict[str, Event]) -> set[str]:
+def check_event_diff(events: Dict[str, Event], new_events: Dict[str, Event]) -> set[str]:
     owl = set([x for x in events if events[x].is_in_waiting_list])
-    nwl = set([x for x in new_events if new_events[x].is_in_waiting_list])
-    return owl - nwl
+    nwl = set([y for y in new_events if new_events[y].is_in_waiting_list])
+    return owl - nwl if len(owl) > len(nwl) else nwl - owl
 
 
 async def action_event(user: UserContext, event: Event) -> bool:
