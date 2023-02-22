@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from asyncio import Task
 from datetime import datetime, timedelta
 from random import randint
@@ -19,7 +20,7 @@ class MyWellnezz:
         self.events: Dict[str, Event] = {}
         self.lock_events = asyncio.Lock()
         self.lock_tasks = asyncio.Lock()
-        self.long_cycle = 60 * 5
+        self.long_cycle = 60 * 10
         self.small_cycle = 15
         self.cycle_timeout = self.long_cycle
         self.cycle_iteration = 1
@@ -34,10 +35,11 @@ class MyWellnezz:
         async with self.lock_events:
             return self.events[idx]
 
-    async def set_events(self, user: UserContext, facility: Facility):
+    async def set_events(self, user: UserContext, facility: Facility) -> Dict[str, Event]:
         d = int((datetime.now()).strftime("%Y%m%d"))
         async with self.lock_events:
             self.events = {k: v for k, v in (await update_events(user, facility, d)).items() if not v.is_ended()}
+            return self.events
 
     async def get_event_id_by_index(self, index: int) -> Optional[str]:
         ev = await self.get_events()
@@ -87,32 +89,30 @@ class MyWellnezz:
                 if await action_event(user, event):
                     break
             await asyncio.sleep(2)
-        await self.set_events(user, facility)
-        await asyncio.sleep(0)
+        await asyncio.sleep(2)
+        n_events = await self.set_events(user, facility)
+        await self.set_loops_timeout(n_events)
 
     async def _events_loop(self, user: UserContext, facility: Facility, config: Config):
         events = []
-        n_events = []
         while self.run:
-            await self.clean_tasks()
-            if len(events) == 0:
-                await self.set_events(user, facility)
-                events = await self.get_events()
-            elif await print_events(facility, user, await self.get_events(), self.cycle_iteration, self.cycle_timeout):
-                await self.set_events(user, facility)
-                n_events = await self.get_events()
-                await self.set_loops_timeout(n_events)
-            if config.auto_book:
-                events_diff = check_event_diff(events, n_events)
-                for e in events_diff:
-                    await self.set_book_task(user, facility, await self.get_event(e))
-                if len(events_diff) > 0:
+            try:
+                await self.clean_tasks()
+                if len(events) == 0:
+                    events = await self.set_events(user, facility)
+                elif await print_events(facility, user, await self.get_events(), self.cycle_iteration,
+                                        self.cycle_timeout):
+                    n_events = await self.set_events(user, facility)
+                    if config.auto_book:
+                        events_diff = check_event_diff(events, n_events)
+                        for e in events_diff:
+                            await self.set_book_task(user, facility, await self.get_event(e))
+                    events = n_events
                     await self.set_loops_timeout(events)
-                    events = await self.get_events()
-                    n_events = await self.get_events()
-            self.cycle_iteration += 1
-            await asyncio.sleep(1)
-        await asyncio.sleep(0)
+                self.cycle_iteration += 1
+                await asyncio.sleep(1)
+            except Exception as e:
+                print(f'Error in {inspect.currentframe().f_code.co_name}: {e}')
 
     async def set_loops_timeout(self, events: Dict[str, Event]):
         tasks = await self.get_book_tasks()
@@ -139,4 +139,4 @@ class MyWellnezz:
                     if not event.is_participant and event.status != 'Booking':
                         await self.set_event_status(event.id, 'Booking')
         except Exception as e:
-            print(f'Error {e}')
+            print(f'Error in {inspect.currentframe().f_code.co_name}: {e}')

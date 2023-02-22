@@ -4,7 +4,7 @@ import colorama
 
 name = 'myWellnezz'
 author = 'x430n'
-version = '1.1.0'
+version = '1.1.1'
 app_id = 'EC1D38D7-D359-48D0-A60C-D8C0B8FB9DF9'
 os = platform.system()
 logo = f'''         

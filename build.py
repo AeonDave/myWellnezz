@@ -64,6 +64,8 @@ if os.name == 'nt':
 else:
     scripts = os.path.join(env, "bin")
 print('        [Starting build]')
+if os.path.exists(os.path.join(working_dir, '__pycache__')):
+    cleanup(os.path.join(working_dir, '__pycache__'))
 if os.path.exists(os.path.join(working_dir, 'dist')):
     cleanup(os.path.join(working_dir, 'dist'))
 create_env(env, True)

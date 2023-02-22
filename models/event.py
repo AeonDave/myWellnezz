@@ -123,7 +123,9 @@ class Event:
 def check_event_diff(events: Dict[str, Event], new_events: Dict[str, Event]) -> set[str]:
     owl = set([x for x in events if events[x].is_in_waiting_list])
     nwl = set([y for y in new_events if new_events[y].is_in_waiting_list])
-    return owl - nwl if len(owl) > len(nwl) else nwl - owl
+    nwlp = set([z for z in new_events if new_events[z].is_participant])
+    diff = owl - nwl if len(owl) > len(nwl) else nwl - owl
+    return diff - nwlp
 
 
 async def action_event(user: UserContext, event: Event) -> bool:
