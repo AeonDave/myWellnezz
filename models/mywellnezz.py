@@ -93,22 +93,26 @@ class MyWellnezz:
         n_events = await self.set_events(user, facility)
         await self.set_loops_timeout(n_events)
 
+    async def update_events_event(self, user: UserContext, facility: Facility, config: Config, old_events: []):
+        new_events = await self.set_events(user, facility)
+        if config.auto_book:
+            events_diff = check_event_diff(new_events, old_events)
+            for e in events_diff:
+                await self.set_book_task(user, facility, await self.get_event(e))
+        await self.set_loops_timeout(new_events)
+        return new_events
+
     async def _events_loop(self, user: UserContext, facility: Facility, config: Config):
         events = []
         while self.run:
             try:
                 await self.clean_tasks()
                 if len(events) == 0:
-                    events = await self.set_events(user, facility)
+                    events = await self.update_events_event(user, facility, config, events)
                 elif await print_events(facility, user, await self.get_events(), self.cycle_iteration,
                                         self.cycle_timeout):
-                    n_events = await self.set_events(user, facility)
-                    if config.auto_book:
-                        events_diff = check_event_diff(events, n_events)
-                        for e in events_diff:
-                            await self.set_book_task(user, facility, await self.get_event(e))
+                    n_events = await self.update_events_event(user, facility, config, events)
                     events = n_events
-                    await self.set_loops_timeout(events)
                 self.cycle_iteration += 1
                 await asyncio.sleep(1)
             except Exception as e:
