@@ -1,6 +1,6 @@
 import asyncio
 import inspect
-from asyncio import Task
+from asyncio import Task, Lock
 from datetime import datetime, timedelta
 from random import randint
 from typing import Optional, Dict
@@ -18,14 +18,14 @@ class MyWellnezz:
         self.print_task: Optional[Task] = None
         self.book_tasks: Dict[str, Task] = {}
         self.events: Dict[str, Event] = {}
-        self.lock_events = asyncio.Lock()
-        self.lock_tasks = asyncio.Lock()
-        self.long_cycle = 60 * 10
-        self.small_cycle = 15
-        self.cycle_timeout = self.long_cycle
-        self.cycle_iteration = 1
-        self.run = True
-        self.test = False
+        self.lock_events: Lock = asyncio.Lock()
+        self.lock_tasks: Lock = asyncio.Lock()
+        self.long_cycle: int = 60 * 10
+        self.small_cycle: int = 15
+        self.cycle_timeout: int = self.long_cycle
+        self.cycle_iteration: int = 1
+        self.run: bool = True
+        self.test: bool = False
 
     async def get_events(self) -> Dict[str, Event]:
         async with self.lock_events:
@@ -81,7 +81,7 @@ class MyWellnezz:
                 event = await self.get_event(event.id)
             except Exception as ex:
                 print(f'Event not found: {ex}')
-            if not event or event.is_ended() or event.is_started() or not event.is_bookable():
+            if not event or event.is_ended() or event.is_started():
                 break
             elif event.available_places > 0 or event.is_participant:
                 if user.token is None or not user.token:
@@ -96,7 +96,7 @@ class MyWellnezz:
     async def update_events_event(self, user: UserContext, facility: Facility, config: Config, old_events: []):
         new_events = await self.set_events(user, facility)
         if config.auto_book:
-            events_diff = check_event_diff(new_events, old_events)
+            events_diff = check_event_diff(old_events, new_events)
             for e in events_diff:
                 await self.set_book_task(user, facility, await self.get_event(e))
         await self.set_loops_timeout(new_events)
@@ -107,12 +107,10 @@ class MyWellnezz:
         while self.run:
             try:
                 await self.clean_tasks()
-                if len(events) == 0:
+                if len(events) == 0 or \
+                        await print_events(facility, user, await self.get_events(), self.cycle_iteration,
+                                           self.cycle_timeout):
                     events = await self.update_events_event(user, facility, config, events)
-                elif await print_events(facility, user, await self.get_events(), self.cycle_iteration,
-                                        self.cycle_timeout):
-                    n_events = await self.update_events_event(user, facility, config, events)
-                    events = n_events
                 self.cycle_iteration += 1
                 await asyncio.sleep(1)
             except Exception as e:

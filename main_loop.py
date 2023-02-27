@@ -124,6 +124,8 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
                     if index != '':
                         if index.isnumeric():
                             await numeric_action(mw, user, facility, abs(int(index)), events)
+                        elif index.lower() == 'r':
+                            events = await mw.set_events(user, facility)
                         else:
                             print('[Closing...]')
                             mw.run = False

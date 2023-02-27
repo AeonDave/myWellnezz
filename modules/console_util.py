@@ -25,7 +25,7 @@ def print_progress_bar(i, total, prefix='', suffix='', decimals=1, length=100, f
     percent = ("{0:." + str(decimals) + "f}").format(100 * (i / float(total)))
     filled_length = int(length * i // total)
     bar = fill * filled_length + '-' * (length - filled_length)
-    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end=print_end)
+    print(f'\r{prefix} |{bar}| {percent}%{suffix}', end=print_end)
     return i >= total
 
 
@@ -73,10 +73,9 @@ async def print_events(facility: Facility, user: UserContext, events: Dict[str, 
     _print_user(user)
     _print_events(events)
     end = print_progress_bar(iteration, timeout, prefix='Next check in:',
-                             suffix=f'{str(timeout - iteration)} '
-                                    f'seconds of {timeout}',
+                             suffix=f' {str(timeout - iteration)} seconds',
                              length=50)
-    print('\nChoose class!')
+    print('\nSelect class id for book/unbook, r for reload')
     return end
 
 
