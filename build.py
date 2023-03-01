@@ -1,9 +1,8 @@
 import os
 import shutil
 import subprocess
-from zipfile import ZipFile
-
 import venv
+from zipfile import ZipFile
 
 import constants
 from modules.version import SemVersion
@@ -52,7 +51,8 @@ def zip_build(s: str, f: str, zip_name: str):
 
 def cleanup(d: str):
     print(f'        [Cleanup {d}]')
-    shutil.rmtree(d)
+    if os.path.exists(d):
+        shutil.rmtree(d)
 
 
 ext = '.exe' if os.name == 'nt' else ''

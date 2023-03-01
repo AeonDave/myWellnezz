@@ -1,5 +1,6 @@
 import asyncio
 import locale
+import platform
 import sys
 from datetime import timedelta, datetime
 from locale import setlocale
@@ -66,16 +67,15 @@ async def set_user_facilities(mw: MyWellnezz, user: UserContext, config: Config)
     user.facilities = await my_facilities(user)
     if user.facilities is None or len(user.facilities) == 0:
         return False
+    print_facilities(config)
+    len_facilities = len(config.get_user().facilities)
+    if len_facilities > 1:
+        opt = get_input(mw, 'Select gym: ')
+    elif len_facilities == 1:
+        opt = 0
     else:
-        print_facilities(config)
-        len_facilities = len(config.get_user().facilities)
-        if len_facilities > 1:
-            opt = get_input(mw, 'Select gym: ')
-        elif len_facilities == 1:
-            opt = 0
-        else:
-            raise ValueError('no facilities found')
-        config.set_facility_choice(opt)
+        raise ValueError('no facilities found')
+    config.set_facility_choice(opt)
     return True
 
 
@@ -139,10 +139,22 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
         await asyncio.sleep(0)
 
 
+def get_or_create_eventloop():
+    try:
+        return asyncio.get_event_loop()
+    except RuntimeError as ex:
+        if "There is no current event loop in thread" in str(ex):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return asyncio.get_event_loop()
+
+
 def main():
-    mw = MyWellnezz()
     set_keepawake(keep_screen_awake=False)
     if sys.platform.lower().startswith('win'):
         setlocale(locale.LC_TIME, locale.getdefaultlocale()[0])
+    if platform.python_version() < '3.10':
+        asyncio.set_event_loop(asyncio.new_event_loop())
+    mw = MyWellnezz()
     c = asyncio.run(get_config(mw))
     asyncio.run(main_loop(mw, c), debug=mw.test)
