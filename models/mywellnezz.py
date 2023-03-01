@@ -86,8 +86,11 @@ class MyWellnezz:
             elif event.available_places > 0 or event.is_participant:
                 if user.token is None or not user.token:
                     await user.refresh()
-                if await action_event(user, event):
-                    break
+                try:
+                    if await action_event(user, event):
+                        break
+                except Exception as ex:
+                    print(f'Error calling api: {ex}')
             await asyncio.sleep(2)
         await asyncio.sleep(2)
         n_events = await self.set_events(user, facility)
