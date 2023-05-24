@@ -32,7 +32,8 @@ async def my_facilities(user: UserContext) -> Optional[List[Facility]]:
     url = f'{schema}services.{base_url}/Core/User/{user.id}/MyFacilities'
     headers = {
         "User-Agent": fake_ua_android(),
-        "Content-Type": "application/json; charset=utf-8"
+        "Content-Type": "application/json; charset=utf-8",
+        "X-MWAPPS-CLIENT": "MywellnessAppAndroid40"
     }
     payload = {
         "token": f"{user.token}"

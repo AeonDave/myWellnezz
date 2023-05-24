@@ -14,7 +14,14 @@ def create_env(path: str, remove: bool = False):
         shutil.rmtree(path)
     if not os.path.exists(path):
         print(f'        [Creating venv {path}]')
-        venv.create(path, clear=True, with_pip=True)
+        try:
+            venv.create(path, clear=True, with_pip=True)
+        except Exception as ex:
+            venv.create(path, clear=True)
+            venv_py = os.path.join(path, 'Scripts', python + ext)
+            if os.path.exists(venv_py):
+                subprocess.Popen([venv_py, "-m", "ensurepip", "--upgrade", "--default-pip"], shell=True).wait()
+                subprocess.Popen([venv_py, "-m", "pip", "install", "--upgrade", "pip"], shell=True).wait()
 
 
 def pip_install_requirements(env_path: str):

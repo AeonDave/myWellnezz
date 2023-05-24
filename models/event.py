@@ -132,7 +132,8 @@ async def action_event(user: UserContext, event: Event) -> bool:
     url = f'{schema}services.{base_url}{api_book_app}/{event.id}/{"unbook" if event.is_participant else "book"}'
     headers = {
         "User-Agent": fake_ua_android(),
-        "Content-Type": "application/json; charset=utf-8"
+        "Content-Type": "application/json; charset=utf-8",
+        "X-MWAPPS-CLIENT": "MywellnessAppAndroid40"
     }
     payload = {
         "partitionDate": event.partition_date,
@@ -158,7 +159,8 @@ async def update_events(user: UserContext, facility: Facility, start: int) -> Op
         try:
             headers = {
                 "User-Agent": fake_ua_android(),
-                "Content-Type": "application/json; charset=utf-8"
+                "Content-Type": "application/json; charset=utf-8",
+                "X-MWAPPS-CLIENT": "MywellnessAppAndroid40"
             }
             payload = {
                 "dateLimit": 1,

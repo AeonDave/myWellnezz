@@ -9,7 +9,7 @@ from typing import Any, Union, Optional
 import aioconsole as aioconsole
 from wakepy import set_keepawake
 
-from models.config import Config, read_config, add_user, remove_user
+from models.config import Config, read_config, add_user, remove_user, update_user
 from models.facility import Facility, my_facilities
 from models.mywellnezz import MyWellnezz
 from models.usercontext import create_user, UserContext
@@ -65,7 +65,10 @@ def get_input(mw: MyWellnezz, inp: str):
 
 async def set_user_facilities(mw: MyWellnezz, user: UserContext, config: Config):
     user.facilities = await my_facilities(user)
-    if user.facilities is None or len(user.facilities) == 0:
+    while user.facilities is None:
+        logged, user = await user.login_app()
+        config = update_user(user)
+    if len(user.facilities) == 0:
         return False
     print_facilities(config)
     len_facilities = len(config.get_user().facilities)
@@ -154,7 +157,7 @@ def main():
     if sys.platform.lower().startswith('win'):
         setlocale(locale.LC_TIME, locale.getdefaultlocale()[0])
     if platform.python_version() < '3.10':
-        asyncio.set_event_loop(asyncio.new_event_loop())
+        get_or_create_eventloop()
     mw = MyWellnezz()
     c = asyncio.run(get_config(mw))
     asyncio.run(main_loop(mw, c), debug=mw.test)

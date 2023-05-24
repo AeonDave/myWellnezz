@@ -108,3 +108,11 @@ def remove_user(ui: int) -> Config:
         config.users.pop(ui)
     write_config(config)
     return read_config()
+
+
+def update_user(user: UserContext) -> Config:
+    config = read_config()
+    config.users = [x for x in config.users if x.id != user.id]
+    config.users.append(user)
+    write_config(config)
+    return read_config()

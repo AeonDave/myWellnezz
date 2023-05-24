@@ -1,7 +1,7 @@
 prettytable
 colorama
 requests
-pyarmor
+pyarmor==7.7.4
 pyinstaller
 wakepy
 psutil

@@ -20,8 +20,8 @@ class MyWellnezz:
         self.events: Dict[str, Event] = {}
         self.lock_events: Lock = asyncio.Lock()
         self.lock_tasks: Lock = asyncio.Lock()
-        self.long_cycle: int = 60 * 10
-        self.small_cycle: int = 15
+        self.long_cycle: int = 60 * 5
+        self.small_cycle: int = 5
         self.cycle_timeout: int = self.long_cycle
         self.cycle_iteration: int = 1
         self.run: bool = True
@@ -91,7 +91,7 @@ class MyWellnezz:
                         break
                 except Exception as ex:
                     print(f'Error calling api: {ex}')
-            await asyncio.sleep(2)
+            await asyncio.sleep(1)
         await asyncio.sleep(2)
         n_events = await self.set_events(user, facility)
         await self.set_loops_timeout(n_events)
