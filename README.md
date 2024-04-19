@@ -3,12 +3,18 @@
 
 ![Alt text](mw.png?raw=true "myWellnezz")
 
-MyWellnezz is an application designed to help users view and register for gym sessions at fitness centers that use the MyWellnezz app.
+MyWellnezz is an application designed to help users view and register for gym sessions at fitness centers that use the MyWellness app.
+
 ## Features
 
 * View Gym Sessions
 * Register/Unregister for Sessions
 * Gym Information
+
+## Disclaimer
+
+This application is intended for informational and personal use only.
+Please note that the creators of this app are not affiliated with MyWellness or the company that developed it in any way.
 
 ## Installation
 
@@ -22,17 +28,13 @@ MyWellnezz is an application designed to help users view and register for gym se
 * poetry install
 * poetry run mywellnezz
 
-### Poetry
-
-* poetry install
-* poetry run mywellnezz
-
 ### Manual
 
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python mywellnezz
+* python -m venv venv
+* source venv/bin/activate
+* pip install -r requirements.txt
+* cd mywellnezz
+* python main.py
 
 ### Contributing
 
