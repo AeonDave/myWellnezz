@@ -42,5 +42,5 @@ Contributions are welcome! If you'd like to improve the MyWellnezz app, feel fre
 
 ### License
 
-This project is licensed under the MIT License.
+This project is licensed under the Apache 2.0 License.
 
