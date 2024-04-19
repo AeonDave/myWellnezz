@@ -1,9 +1,5 @@
 import asyncio
-import locale
-import platform
-import sys
 from datetime import timedelta, datetime
-from locale import setlocale
 from typing import Any, Union, Optional
 
 import aioconsole as aioconsole
@@ -142,22 +138,8 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
         await asyncio.sleep(0)
 
 
-def get_or_create_eventloop():
-    try:
-        return asyncio.get_event_loop()
-    except RuntimeError as ex:
-        if "There is no current event loop in thread" in str(ex):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            return asyncio.get_event_loop()
-
-
 def main():
     set_keepawake(keep_screen_awake=False)
-    if sys.platform.lower().startswith('win'):
-        setlocale(locale.LC_TIME, locale.getdefaultlocale()[0])
-    if platform.python_version() < '3.10':
-        get_or_create_eventloop()
     mw = MyWellnezz()
     c = asyncio.run(get_config(mw))
     asyncio.run(main_loop(mw, c), debug=mw.test)

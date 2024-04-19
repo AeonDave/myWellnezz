@@ -1,9 +1,10 @@
 import asyncio
 from typing import List, Optional
 
-from constants import schema, base_url
-from modules.http_calls import async_post
-from modules.useragent import fake_ua_android
+from my_wellnezz.constants import schema, base_url
+from my_wellnezz.models.usercontext import UserContext
+from my_wellnezz.modules.http_calls import async_post
+from my_wellnezz.modules.useragent import fake_ua_android
 
 
 class Facility:
@@ -25,9 +26,6 @@ class Facility:
         # self.is_demo: bool = kwargs.get('isDemo')
 
 
-from models.usercontext import UserContext
-
-
 async def my_facilities(user: UserContext) -> Optional[List[Facility]]:
     url = f'{schema}services.{base_url}/Core/User/{user.id}/MyFacilities'
     headers = {
@@ -44,7 +42,8 @@ async def my_facilities(user: UserContext) -> Optional[List[Facility]]:
             print(f'Error: {response["errors"][0]["errorMessage"]}')
             return None
         if response and 'data' in response:
-            return [] if response['data']['facilities'] is None else [Facility(**f) for f in response['data']['facilities']]
+            return [] if response['data']['facilities'] is None else [Facility(**f) for f in
+                                                                      response['data']['facilities']]
     except Exception as ex:
         print(f'Connection Error: {ex}')
         await asyncio.sleep(30)

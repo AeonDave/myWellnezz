@@ -5,12 +5,12 @@ from datetime import datetime, timedelta
 from random import randint
 from typing import Optional, Dict
 
-from models.config import Config
-from models.event import Event, update_events, action_event, check_event_diff
-from models.facility import Facility
-from models.usercontext import UserContext
-from modules.console_util import print_events
-from modules.math_util import percentage_of
+from my_wellnezz.models.config import Config
+from my_wellnezz.models.event import Event, update_events, action_event, check_event_diff
+from my_wellnezz.models.facility import Facility
+from my_wellnezz.models.usercontext import UserContext
+from my_wellnezz.modules.console_util import print_events
+from my_wellnezz.modules.math_util import percentage_of
 
 
 class MyWellnezz:

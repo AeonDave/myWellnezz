@@ -4,24 +4,25 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 
 import pwinput
+from dateutil import parser, tz
 
-from constants import schema, base_url, app_id
-from models.facility import Facility
-from modules.http_calls import async_post
-from modules.math_util import write_obfuscation, read_obfuscation
-from modules.useragent import fake_ua_android
+from my_wellnezz.constants import schema, base_url, app_id
+from my_wellnezz.modules.http_calls import async_post
+from my_wellnezz.modules.math_util import read_obfuscation, write_obfuscation
+from my_wellnezz.modules.useragent import fake_ua_android
 
 email_re = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
 
 class UserContext:
     def __init__(self, **kwargs):
+        from my_wellnezz.models.facility import Facility
         self.id: str = kwargs.get('id')
         self.usr: str = kwargs.get('accountUsername') or kwargs.get('usr')
         self.pwd: str = kwargs.get('pwd')
         self.first_name: str = kwargs.get('firstName') or kwargs.get('first_name')
         self.last_name: str = kwargs.get('lastName') or kwargs.get('last_name')
-        self.incluseive_gender: str = kwargs.get('inclusiveGender') or kwargs.get('incluseive_gender')
+        self.inclusive_gender: str = kwargs.get('inclusiveGender') or kwargs.get('inclusive_gender')
         self.gender: str = kwargs.get('gender')
         self.address1: str = kwargs.get('address1')
         self.zip_code: str = kwargs.get('zipCode') or kwargs.get('zip_code')
@@ -36,8 +37,7 @@ class UserContext:
         self.age: int = kwargs.get('age')
         self.picture_url: str = kwargs.get('pictureUrl') or kwargs.get('picture_url')
         if kwargs.get('modifiedOn'):
-            self.modified_on: datetime = datetime.strptime(kwargs.get('modifiedOn'), '%Y-%m-%d %H:%M:%S %z') \
-                .replace(tzinfo=None)
+            self.modified_on: datetime = parser.parse(kwargs.get('modifiedOn')).replace(tzinfo=tz.gettz('UTC'))
         elif kwargs.get('modified_on'):
             self.modified_on: datetime = datetime.fromisoformat(kwargs.get('modified_on'))
         else:
@@ -54,6 +54,7 @@ class UserContext:
             else datetime.now()
         )
         self.facilities: List[Facility] = []
+
         # self.credential_id: str = kwargs.get('credentialId') or kwargs.get('credential_id')
         # self.nick_name: str = kwargs.get('nickName')
         # self.birth_date: str = kwargs.get('birthDate')

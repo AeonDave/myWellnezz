@@ -3,74 +3,76 @@ from datetime import datetime
 from typing import Dict, Optional, Set
 
 import colorama
+from dateutil import parser
+from loguru import logger
 from prettytable import PrettyTable
 
-from constants import schema, base_url, api_search_app, api_book_app
-from models.facility import Facility
-from models.usercontext import UserContext
-from modules.http_calls import async_post
-from modules.useragent import fake_ua_android
+from my_wellnezz.constants import base_url, schema, api_book_app, api_search_app
+from my_wellnezz.models.facility import Facility
+from my_wellnezz.models.usercontext import UserContext
+from my_wellnezz.modules.http_calls import async_post
+from my_wellnezz.modules.useragent import fake_ua_android
 
 
 class Event:
     def __init__(self, **kwargs):
-        self.id: str = kwargs.get('id')
-        self.name: str = kwargs.get('name')
-        self.room: str = kwargs.get('room')
-        self.start_hour: int = kwargs.get('startHour')
-        self.start_minutes: int = kwargs.get('startMinutes')
-        self.end_hour: int = kwargs.get('endHour')
-        self.end_minutes: int = kwargs.get('endMinutes')
-        self.partition_date: int = kwargs.get('partitionDate')
-        self.start_date: int = kwargs.get('startDate')
-        self.end_date: int = kwargs.get('endDate')
-        self.assigned_to: str = kwargs.get('assignedTo')
-        self.picture_url: str = kwargs.get('pictureUrl')
-        self.max_participants: int = kwargs.get('maxParticipants')
-        self.actual_participants: int = kwargs.get('actualParticipants')
-        self.booking_days_in_advance: int = kwargs.get('bookingDaysInAdvance')
-        self.cancellation_minutes_in_advance: int = kwargs.get('cancellationMinutesInAdvance')
-        self.mets: float = kwargs.get('mets')
-        self.estimated_calories: int = kwargs.get('estimatedCalories')
-        self.estimated_move: int = kwargs.get('estimatedMove')
-        self.waiting_list_counter: int = kwargs.get('waitingListCounter')
-        self.day_in_advance_start_hour: int = kwargs.get('dayInAdvanceStartHour')
-        self.day_in_advance_start_minutes: int = kwargs.get('dayInAdvanceStartMinutes')
-        self.booking_opens_on: datetime = datetime.strptime(kwargs.get('bookingOpensOn'),
-                                                            '%Y-%m-%d %H:%M:%S %z').replace(tzinfo=None)
-        self.available_places: int = kwargs.get('availablePlaces')
-        self.booking_user_status: str = kwargs.get('bookingUserStatus')
-        self.booking_available: bool = kwargs.get('bookingAvailable')
-        self.is_participant: bool = kwargs.get('isParticipant')
-        self.is_in_waiting_list: bool = kwargs.get('isInWaitingList')
-        self.booking_has_waiting_list: bool = kwargs.get('bookingHasWaitingList')
-        self.has_penalties_on: bool = kwargs.get('hasPenaltiesOn')
-        self.live_event: bool = kwargs.get('liveEvent')
-        # self.cannot_track: str = kwargs.get('cannotTrack')
-        # self.room_id: str = kwargs.get('roomId')
-        # self.calendar_event_type: str = kwargs.get('calendarEventType')
-        # self.event_type_id: str = kwargs.get('eventTypeId')
-        # self.assigned_to_user_id: str = kwargs.get('assignedToUserId')
-        # self.staff_id: str = kwargs.get('staffId')
-        # self.facility_name: str = kwargs.get('facility_name')
-        # self.facility_id: str = kwargs.get('facilityId')
-        # self.has_layout: bool = kwargs.get('hasLayout')
-        # self.has_done_item: bool = kwargs.get('hasDoneItem')
-        # self.is_single_occurrence: bool = kwargs.get('isSingleOccurrence')
-        # self.auto_login: bool = kwargs.get('autoLogin')
-        # self.tags: [] = kwargs.get('tags')
-        # self.auto_start_event: bool = kwargs.get('autoStartEvent')
-        # self.ext_data: {} = kwargs.get('tags')
-        # self.participants: [] = kwargs.get('extData')
-        # self.skus: [] = kwargs.get('skus')
-        self.start: datetime = None if self.partition_date is None else datetime.strptime(
-            f'{self.partition_date}T{str(self.start_hour).zfill(2)}:{str(self.start_minutes).zfill(2)}:00',
-            '%Y%m%dT%H:%M:%S')
-        self.end: datetime = None if self.partition_date is None else datetime.strptime(
-            f'{self.partition_date}T{str(self.end_hour).zfill(2)}:{str(self.end_minutes).zfill(2)}:00',
-            '%Y%m%dT%H:%M:%S')
-        self.can_book: bool = self.booking_user_status == 'CanBook'
-        self.status: str = self.get_status()
+        try:
+            self.id: str = kwargs.get('id')
+            self.name: str = kwargs.get('name')
+            self.room: str = kwargs.get('room')
+            self.start_hour: int = kwargs.get('startHour')
+            self.start_minutes: int = kwargs.get('startMinutes')
+            self.end_hour: int = kwargs.get('endHour')
+            self.end_minutes: int = kwargs.get('endMinutes')
+            self.partition_date: int = kwargs.get('partitionDate')
+            self.start_date: int = kwargs.get('startDate')
+            self.end_date: int = kwargs.get('endDate')
+            self.assigned_to: str = kwargs.get('assignedTo')
+            self.picture_url: str = kwargs.get('pictureUrl')
+            self.max_participants: int = kwargs.get('maxParticipants')
+            self.actual_participants: int = kwargs.get('actualParticipants')
+            self.booking_days_in_advance: int = kwargs.get('bookingDaysInAdvance')
+            self.cancellation_minutes_in_advance: int = kwargs.get('cancellationMinutesInAdvance')
+            self.mets: float = kwargs.get('mets')
+            self.estimated_calories: int = kwargs.get('estimatedCalories')
+            self.estimated_move: int = kwargs.get('estimatedMove')
+            self.waiting_list_counter: int = kwargs.get('waitingListCounter')
+            self.day_in_advance_start_hour: int = kwargs.get('dayInAdvanceStartHour')
+            self.day_in_advance_start_minutes: int = kwargs.get('dayInAdvanceStartMinutes')
+            self.booking_opens_on: datetime = parser.parse(kwargs.get('bookingOpensOn')).replace(tzinfo=None)
+            self.available_places: int = kwargs.get('availablePlaces')
+            self.booking_user_status: str = kwargs.get('bookingUserStatus')
+            self.booking_available: bool = kwargs.get('bookingAvailable')
+            self.is_participant: bool = kwargs.get('isParticipant')
+            self.is_in_waiting_list: bool = kwargs.get('isInWaitingList')
+            self.booking_has_waiting_list: bool = kwargs.get('bookingHasWaitingList')
+            self.has_penalties_on: bool = kwargs.get('hasPenaltiesOn')
+            self.live_event: bool = kwargs.get('liveEvent')
+            # self.cannot_track: str = kwargs.get('cannotTrack')
+            # self.room_id: str = kwargs.get('roomId')
+            # self.calendar_event_type: str = kwargs.get('calendarEventType')
+            # self.event_type_id: str = kwargs.get('eventTypeId')
+            # self.assigned_to_user_id: str = kwargs.get('assignedToUserId')
+            # self.staff_id: str = kwargs.get('staffId')
+            # self.facility_name: str = kwargs.get('facility_name')
+            # self.facility_id: str = kwargs.get('facilityId')
+            # self.has_layout: bool = kwargs.get('hasLayout')
+            # self.has_done_item: bool = kwargs.get('hasDoneItem')
+            # self.is_single_occurrence: bool = kwargs.get('isSingleOccurrence')
+            # self.auto_login: bool = kwargs.get('autoLogin')
+            # self.tags: [] = kwargs.get('tags')
+            # self.auto_start_event: bool = kwargs.get('autoStartEvent')
+            # self.ext_data: {} = kwargs.get('tags')
+            # self.participants: [] = kwargs.get('extData')
+            # self.skus: [] = kwargs.get('skus')
+            self.start: datetime = None if self.partition_date is None else parser.parse(
+                f'{self.partition_date}T{str(self.start_hour).zfill(2)}:{str(self.start_minutes).zfill(2)}:00')
+            self.end: datetime = None if self.partition_date is None else parser.parse(
+                f'{self.partition_date}T{str(self.end_hour).zfill(2)}:{str(self.end_minutes).zfill(2)}:00')
+            self.can_book: bool = self.booking_user_status == 'CanBook'
+            self.status: str = self.get_status()
+        except Exception as ex:
+            logger.error(f'Error creating event: {ex}')
 
     def is_ended(self):
         return datetime.now() >= self.end
@@ -174,7 +176,8 @@ async def update_events(user: UserContext, facility: Facility, start: int) -> Op
                 print(f'Error: {response["errors"][0]["errorMessage"]}')
                 return None
             if response and 'data' in response:
-                return {Event(**e).id: Event(**e) for e in response['data']['eventItems']}
+                evs = [Event(**e) for e in response['data']['eventItems']]
+                return {e.id: e for e in evs}
         except Exception as ex:
             print(f'Connection Error {ex}')
             await asyncio.sleep(30)

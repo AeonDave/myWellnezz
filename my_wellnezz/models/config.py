@@ -6,9 +6,9 @@ import uuid
 from os.path import exists
 from typing import List, Optional
 
-from models.facility import Facility, my_facilities
-from models.usercontext import UserContext
-from modules.math_util import write_obfuscation, read_obfuscation
+from my_wellnezz.models.facility import my_facilities, Facility
+from my_wellnezz.models.usercontext import UserContext
+from my_wellnezz.modules.math_util import write_obfuscation, read_obfuscation
 
 config_filename = 'conf.json'
 

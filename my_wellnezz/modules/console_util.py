@@ -3,12 +3,12 @@ from typing import Dict
 
 from prettytable import PrettyTable
 
-import constants
-from models.config import Config
-from models.event import Event
-from models.facility import Facility
-from models.usercontext import UserContext
-from modules.ascii_art import AsciiArt
+from my_wellnezz import constants
+from my_wellnezz.models.config import Config
+from my_wellnezz.models.event import Event
+from my_wellnezz.models.facility import Facility
+from my_wellnezz.models.usercontext import UserContext
+from my_wellnezz.modules.ascii_art import AsciiArt
 
 current_art = None
 
@@ -75,7 +75,7 @@ async def print_events(facility: Facility, user: UserContext, events: Dict[str, 
     end = print_progress_bar(iteration, timeout, prefix='Next check in:',
                              suffix=f' {str(timeout - iteration)} seconds',
                              length=50)
-    print('\nSelect class id for book/unbook, r for reload')
+    print('\nSelect class id for book/unbook, r for reload, any other letter for exit')
     return end
 
 

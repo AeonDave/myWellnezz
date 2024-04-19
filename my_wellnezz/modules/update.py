@@ -6,11 +6,11 @@ import sys
 from pathlib import Path
 from zipfile import ZipFile
 
-import constants
-from modules.process_util import kill_process_bypid
-from modules.useragent import fake_ua_android
-from modules.version import SemVersion
-from modules.http_calls import async_get, async_raw_get
+from my_wellnezz import constants
+from my_wellnezz.modules.http_calls import async_get, async_raw_get
+from my_wellnezz.modules.process_util import kill_process_bypid
+from my_wellnezz.modules.useragent import fake_ua_android
+from my_wellnezz.modules.version import SemVersion
 
 
 def self_path():
