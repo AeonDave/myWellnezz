@@ -4,8 +4,8 @@ from typing import Optional
 import colorama
 from PIL import Image
 
-from my_wellnezz.modules.http_calls import async_raw_get
-from my_wellnezz.modules.useragent import fake_ua_android
+from modules.http_calls import async_raw_get
+from modules.useragent import fake_ua_android
 
 
 class AsciiArt:

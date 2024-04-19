@@ -1,10 +1,10 @@
 import asyncio
 from typing import List, Optional
 
-from my_wellnezz.constants import schema, base_url
-from my_wellnezz.models.usercontext import UserContext
-from my_wellnezz.modules.http_calls import async_post
-from my_wellnezz.modules.useragent import fake_ua_android
+from app.constants import schema, base_url
+from models.usercontext import UserContext
+from modules.http_calls import async_post
+from modules.useragent import fake_ua_android
 
 
 class Facility:

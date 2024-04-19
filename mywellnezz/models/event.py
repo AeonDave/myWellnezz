@@ -7,11 +7,11 @@ from dateutil import parser
 from loguru import logger
 from prettytable import PrettyTable
 
-from my_wellnezz.constants import base_url, schema, api_book_app, api_search_app
-from my_wellnezz.models.facility import Facility
-from my_wellnezz.models.usercontext import UserContext
-from my_wellnezz.modules.http_calls import async_post
-from my_wellnezz.modules.useragent import fake_ua_android
+from app.constants import base_url, schema, api_book_app, api_search_app
+from models.facility import Facility
+from models.usercontext import UserContext
+from modules.http_calls import async_post
+from modules.useragent import fake_ua_android
 
 
 class Event:

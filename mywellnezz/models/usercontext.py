@@ -6,17 +6,17 @@ from typing import List, Optional
 import pwinput
 from dateutil import parser, tz
 
-from my_wellnezz.constants import schema, base_url, app_id
-from my_wellnezz.modules.http_calls import async_post
-from my_wellnezz.modules.math_util import read_obfuscation, write_obfuscation
-from my_wellnezz.modules.useragent import fake_ua_android
+from app.constants import schema, base_url, app_id
+from modules.http_calls import async_post
+from modules.math_util import read_obfuscation, write_obfuscation
+from modules.useragent import fake_ua_android
 
 email_re = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
 
 class UserContext:
     def __init__(self, **kwargs):
-        from my_wellnezz.models.facility import Facility
+        from models.facility import Facility
         self.id: str = kwargs.get('id')
         self.usr: str = kwargs.get('accountUsername') or kwargs.get('usr')
         self.pwd: str = kwargs.get('pwd')

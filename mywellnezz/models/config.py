@@ -6,9 +6,9 @@ import uuid
 from os.path import exists
 from typing import List, Optional
 
-from my_wellnezz.models.facility import my_facilities, Facility
-from my_wellnezz.models.usercontext import UserContext
-from my_wellnezz.modules.math_util import write_obfuscation, read_obfuscation
+from models.facility import Facility, my_facilities
+from models.usercontext import UserContext
+from modules.math_util import read_obfuscation, write_obfuscation
 
 config_filename = 'conf.json'
 
@@ -55,13 +55,13 @@ class Config:
 
 def read_config() -> Config:
     if exists(config_filename):
-        with open(config_filename, encoding='utf-8') as f:
-            try:
+        try:
+            with open(config_filename, encoding='utf-8') as f:
                 txt = read_obfuscation(str(uuid.getnode()), f.read())
                 return Config(**json.loads(txt))
-            except Exception as ex:
-                print(f'Error reading config {ex}')
-                os.remove(config_filename)
+        except Exception as ex:
+            print(f'Error reading config {ex}')
+            os.remove(config_filename)
     return Config()
 
 
