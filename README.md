@@ -23,18 +23,25 @@ Please note that the creators of this app are not affiliated with MyWellness or 
 * Python >=3.11
 * Clone this repository: git clone https://github.com/AeonDave/myWellnezz.git
 
-### Poetry
+### Run with Poetry
 
 * poetry install
 * poetry run mywellnezz
 
-### Manual
+### Run Manual
 
 * python -m venv venv
 * source venv/bin/activate
 * pip install -r requirements.txt
 * cd mywellnezz
 * python main.py
+
+### Create binary
+
+* poetry install
+* poetry run build
+
+Your binary will be in the dist folder.
 
 ### Contributing
 

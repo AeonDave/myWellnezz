@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 from typing import Any, Union, Optional
 
 import aioconsole as aioconsole
-from wakepy import set_keepawake
+import mouse
 
 from models.config import Config, read_config, add_user, remove_user, update_user
 from models.facility import Facility, my_facilities
@@ -138,8 +138,15 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
         await asyncio.sleep(0)
 
 
+async def awake():
+    while True:
+        mouse.move("1", "0", False)
+        await asyncio.sleep(30)
+
+
 def main():
-    set_keepawake(keep_screen_awake=False)
+    loop = asyncio.get_event_loop()
+    loop.create_task(awake())
     mw = MyWellnezz()
     c = asyncio.run(get_config(mw))
     asyncio.run(main_loop(mw, c), debug=mw.test)

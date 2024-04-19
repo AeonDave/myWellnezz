@@ -12,10 +12,9 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.13"
 prettytable = "^3.10.0"
 colorama = "^0.4.6"
-wakepy = "^0.7.2"
 psutil = "^5.9.8"
 aiohttp = "^3.9.5"
 aioconsole = "^0.7.0"
@@ -23,9 +22,13 @@ pillow = "^10.3.0"
 pwinput = "^1.0.3"
 python-dateutil = "^2.9.0.post0"
 loguru = "^0.7.2"
+pyinstaller = "^6.6.0"
+mouse = "^0.7.1"
 
 [tool.poetry.scripts]
 mywellnezz = "mywellnezz.main:start"
+build = "pyinstaller:install"
+
 
 [build-system]
 requires = ["poetry-core"]
