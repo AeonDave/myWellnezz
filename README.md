@@ -1,7 +1,7 @@
 
 # myWellnezz
 
-![Alt text](mw.png?raw=true "myWellnezz")
+![myWellnezz Image](mw.png?raw=true "myWellnezz")
 
 MyWellnezz is an application designed to help users view and register for gym sessions at fitness centers that use the MyWellness app.
 
