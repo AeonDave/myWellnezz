@@ -1,18 +1,17 @@
 import asyncio
+import hashlib
 from datetime import datetime
 from typing import Dict, Optional, Set
-import hashlib
 
 import colorama
+from app.constants import base_url, schema, api_book_app, api_search_app
 from dateutil import parser
 from loguru import logger
-from prettytable import PrettyTable
-
-from app.constants import base_url, schema, api_book_app, api_search_app
 from models.facility import Facility
 from models.usercontext import UserContext
 from modules.http_calls import async_post
 from modules.useragent import fake_ua_android
+from prettytable import PrettyTable
 
 
 class Event:
@@ -40,7 +39,8 @@ class Event:
             self.waiting_list_counter: int = kwargs.get('waitingListCounter')
             self.day_in_advance_start_hour: int = kwargs.get('dayInAdvanceStartHour')
             self.day_in_advance_start_minutes: int = kwargs.get('dayInAdvanceStartMinutes')
-            self.booking_opens_on: datetime = datetime.now() if kwargs.get('bookingOpensOn') is None else parser.parse(kwargs.get('bookingOpensOn')).replace(tzinfo=None)
+            self.booking_opens_on: datetime = datetime.now() if kwargs.get('bookingOpensOn') is None \
+                else parser.parse(kwargs.get('bookingOpensOn')).replace(tzinfo=None)
             self.available_places: int = kwargs.get('availablePlaces')
             self.booking_user_status: str = kwargs.get('bookingUserStatus')
             self.booking_available: bool = kwargs.get('bookingAvailable')
