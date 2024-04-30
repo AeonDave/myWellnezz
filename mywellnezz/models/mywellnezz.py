@@ -64,12 +64,12 @@ class MyWellnezz:
         if event.is_started():
             print(f'{event.name} is already started')
             return
-        if event.id in self.book_tasks and not (await self.get_book_task(event.id)).done():
-            (await self.get_book_task(event.id)).cancel()
-            await self.pop_book_task(event.id)
-            await self.set_event_status(event.id, event.get_status())
+        if event.uid in self.book_tasks and not (await self.get_book_task(event.uid)).done():
+            (await self.get_book_task(event.uid)).cancel()
+            await self.pop_book_task(event.uid)
+            await self.set_event_status(event.uid, event.get_status())
             return
-        self.book_tasks[event.id] = asyncio.create_task(self._book_event_loop(user, facility, event))
+        self.book_tasks[event.uid] = asyncio.create_task(self._book_event_loop(user, facility, event))
 
     def set_event_task(self, user: UserContext, facility: Facility, config: Config):
         if self.print_task is None or self.print_task.done():
@@ -78,7 +78,7 @@ class MyWellnezz:
     async def _book_event_loop(self, user: UserContext, facility: Facility, event: Event):
         while self.run:
             try:
-                event = await self.get_event(event.id)
+                event = await self.get_event(event.uid)
             except Exception as ex:
                 print(f'Event not found: {ex}')
             if not event or event.is_ended() or event.is_started():
@@ -142,6 +142,6 @@ class MyWellnezz:
                 else:
                     event = await self.get_event(t)
                     if not event.is_participant and event.status != 'Booking':
-                        await self.set_event_status(event.id, 'Booking')
+                        await self.set_event_status(event.uid, 'Booking')
         except Exception as e:
             print(f'Error in {inspect.currentframe().f_code.co_name}: {e}')

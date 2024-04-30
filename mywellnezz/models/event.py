@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 from typing import Dict, Optional, Set
+import hashlib
 
 import colorama
 from dateutil import parser
@@ -39,7 +40,7 @@ class Event:
             self.waiting_list_counter: int = kwargs.get('waitingListCounter')
             self.day_in_advance_start_hour: int = kwargs.get('dayInAdvanceStartHour')
             self.day_in_advance_start_minutes: int = kwargs.get('dayInAdvanceStartMinutes')
-            self.booking_opens_on: datetime = parser.parse(kwargs.get('bookingOpensOn')).replace(tzinfo=None)
+            self.booking_opens_on: datetime = datetime.now() if kwargs.get('bookingOpensOn') is None else parser.parse(kwargs.get('bookingOpensOn')).replace(tzinfo=None)
             self.available_places: int = kwargs.get('availablePlaces')
             self.booking_user_status: str = kwargs.get('bookingUserStatus')
             self.booking_available: bool = kwargs.get('bookingAvailable')
@@ -65,6 +66,7 @@ class Event:
             # self.ext_data: {} = kwargs.get('tags')
             # self.participants: [] = kwargs.get('extData')
             # self.skus: [] = kwargs.get('skus')
+            self.uid: str = hashlib.sha256(f"{self.id}/{self.partition_date}".encode()).hexdigest()
             self.start: datetime = None if self.partition_date is None else parser.parse(
                 f'{self.partition_date}T{str(self.start_hour).zfill(2)}:{str(self.start_minutes).zfill(2)}:00')
             self.end: datetime = None if self.partition_date is None else parser.parse(
@@ -117,7 +119,7 @@ class Event:
         elif self.status == 'Ended':
             color_status = colorama.Fore.RED + self.status + colorama.Style.RESET_ALL
         table.add_row(
-            [index, self.name, self.assigned_to, self.room, self.start.strftime('%A %d %H:%M').capitalize(),
+            [index, self.name, self.assigned_to, self.room, self.start.strftime('%A %d %m  %H:%M').capitalize(),
              self.end.strftime('%H:%M'),
              color_status, self.available_places])
 
@@ -177,7 +179,7 @@ async def update_events(user: UserContext, facility: Facility, start: int) -> Op
                 return None
             if response and 'data' in response:
                 evs = [Event(**e) for e in response['data']['eventItems']]
-                return {e.id: e for e in evs}
+                return {e.uid: e for e in evs}
         except Exception as ex:
             print(f'Connection Error {ex}')
             await asyncio.sleep(30)
