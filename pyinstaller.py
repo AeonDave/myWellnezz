@@ -1,4 +1,5 @@
 import errno
+import os
 import shutil
 from pathlib import Path
 
@@ -19,13 +20,19 @@ def remove_directory(path):
 
 main_file = 'main.py'
 base_dir = Path(__file__).parent.absolute()
-entry_d = base_dir / name
-entry = entry_d / main_file
-build_d = base_dir / 'build'
-dist_d = base_dir / 'dist'
-ico = base_dir / '../app.ico'
+
+entry_d = os.path.join(base_dir, name)
+entry = os.path.join(entry_d, main_file)
+build_d = os.path.join(base_dir, 'build')
+dist_d = os.path.join(base_dir, 'dist')
+ico = '../app.ico'
 remove_directory(build_d)
 remove_directory(dist_d)
+
+
+# build = os.path.join(build_d, main_file)
+# build_m_d = os.path.join(Path(__file__).parent.absolute(), 'build_m')
+# build_m = os.path.join(build_m_d, main_file)
 
 
 # def flatten(src, out):
