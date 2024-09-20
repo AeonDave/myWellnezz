@@ -29,12 +29,6 @@ ico = '../app.ico'
 remove_directory(build_d)
 remove_directory(dist_d)
 
-
-# build = os.path.join(build_d, main_file)
-# build_m_d = os.path.join(Path(__file__).parent.absolute(), 'build_m')
-# build_m = os.path.join(build_m_d, main_file)
-
-
 # def flatten(src, out):
 #     directory = os.path.dirname(out)
 #     os.makedirs(directory, exist_ok=True)
