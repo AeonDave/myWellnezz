@@ -1,17 +1,18 @@
-import asyncio
 import hashlib
 from datetime import datetime
+from time import sleep
 from typing import Dict, Optional, Set
 
 import colorama
-from app.constants import base_url, schema, api_book_app, api_search_app
 from dateutil import parser
 from loguru import logger
+from prettytable import PrettyTable
+
+from app.constants import base_url, schema, api_book_app, api_search_app
 from models.facility import Facility
 from models.usercontext import UserContext
-from modules.http_calls import async_post
+from modules.http_calls import post
 from modules.useragent import fake_ua_android
-from prettytable import PrettyTable
 
 
 class Event:
@@ -132,7 +133,7 @@ def check_event_diff(events: Dict[str, Event], new_events: Dict[str, Event]) -> 
     return owl - nwl if len(owl) > len(nwl) else nwl - owl
 
 
-async def action_event(user: UserContext, event: Event) -> bool:
+def action_event(user: UserContext, event: Event) -> bool:
     url = f'{schema}services.{base_url}{api_book_app}/{event.id}/{"unbook" if event.is_participant else "book"}'
     headers = {
         "User-Agent": fake_ua_android(),
@@ -145,7 +146,7 @@ async def action_event(user: UserContext, event: Event) -> bool:
         "token": user.token
     }
     try:
-        response = await async_post(url, headers, payload)
+        response = post(url, headers, payload)
         if not response:
             print('Something bad happened')
         else:
@@ -155,11 +156,11 @@ async def action_event(user: UserContext, event: Event) -> bool:
     return False
 
 
-async def update_events(user: UserContext, facility: Facility, start: int) -> Optional[Dict[str, Event]]:
+def update_events(user: UserContext, facility: Facility, start: int) -> Optional[Dict[str, Event]]:
     url = f'{schema}services.{base_url}{api_search_app}/{facility.id}/SearchCalendarEvents'
     while True:
         if user.token is None or not user.token:
-            await user.refresh()
+            user.refresh()
         try:
             headers = {
                 "User-Agent": fake_ua_android(),
@@ -173,7 +174,7 @@ async def update_events(user: UserContext, facility: Facility, start: int) -> Op
                 "timeScope": "Custom",
                 "token": user.token
             }
-            response = await async_post(url, headers, payload)
+            response = post(url, headers, payload)
             if response and 'errors' in response:
                 print(f'Error: {response["errors"][0]["errorMessage"]}')
                 return None
@@ -182,5 +183,5 @@ async def update_events(user: UserContext, facility: Facility, start: int) -> Op
                 return {e.uid: e for e in evs}
         except Exception as ex:
             print(f'Connection Error {ex}')
-            await asyncio.sleep(30)
+            sleep(20)
         return None

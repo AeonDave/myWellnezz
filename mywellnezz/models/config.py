@@ -4,6 +4,7 @@ import json
 import os
 import uuid
 from os.path import exists
+from time import sleep
 from typing import List, Optional
 
 from models.facility import Facility, my_facilities
@@ -40,14 +41,14 @@ class Config:
     def get_user(self) -> UserContext:
         return self.users[self.user_choice]
 
-    async def get_facility(self) -> Facility:
+    def get_facility(self) -> Facility:
         if len(self.get_user().facilities) > self.facility_choice:
             return self.get_user().facilities[self.facility_choice]
         while True:
-            f = await my_facilities(self.get_user())
+            f = my_facilities(self.get_user())
             if not f or len(f) == 0:
                 print('No gym found')
-                await asyncio.sleep(2)
+                sleep(2)
                 continue
             self.get_user().facilities = f
             return self.get_user().facilities[self.facility_choice]

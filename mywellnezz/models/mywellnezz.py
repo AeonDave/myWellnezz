@@ -38,7 +38,7 @@ class MyWellnezz:
     async def set_events(self, user: UserContext, facility: Facility) -> Dict[str, Event]:
         d = int((datetime.now()).strftime("%Y%m%d"))
         async with self.lock_events:
-            self.events = {k: v for k, v in (await update_events(user, facility, d)).items() if not v.is_ended()}
+            self.events = {k: v for k, v in (update_events(user, facility, d)).items() if not v.is_ended()}
             return self.events
 
     async def get_event_id_by_index(self, index: int) -> Optional[str]:
@@ -85,9 +85,9 @@ class MyWellnezz:
                 break
             elif event.available_places > 0 or event.is_participant:
                 if user.token is None or not user.token:
-                    await user.refresh()
+                    user.refresh()
                 try:
-                    if await action_event(user, event):
+                    if action_event(user, event):
                         break
                 except Exception as ex:
                     print(f'Error calling api: {ex}')
@@ -111,7 +111,7 @@ class MyWellnezz:
             try:
                 await self.clean_tasks()
                 if len(events) == 0 or \
-                        await print_events(facility, user, await self.get_events(), self.cycle_iteration,
+                        print_events(facility, user, await self.get_events(), self.cycle_iteration,
                                            self.cycle_timeout):
                     events = await self.update_events_event(user, facility, config, events)
                 self.cycle_iteration += 1

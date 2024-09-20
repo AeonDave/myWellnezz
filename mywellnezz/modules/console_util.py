@@ -66,10 +66,10 @@ def _print_facilities(config: Config):
     print(ptc)
 
 
-async def print_events(facility: Facility, user: UserContext, events: Dict[str, Event], iteration: int,
+def print_events(facility: Facility, user: UserContext, events: Dict[str, Event], iteration: int,
                        timeout: int) -> bool:
     print_clear_logo()
-    await _print_facility_logo(facility)
+    _print_facility_logo(facility)
     _print_user(user)
     _print_events(events)
     end = print_progress_bar(iteration, timeout, prefix='Next check in:',
@@ -79,11 +79,11 @@ async def print_events(facility: Facility, user: UserContext, events: Dict[str, 
     return end
 
 
-async def _print_facility_logo(facility: Facility):
+def _print_facility_logo(facility: Facility):
     global current_art
     if current_art is None:
         current_art = AsciiArt()
-        await current_art.generate_ascii(facility.logo_url)
+        current_art.generate_ascii(facility.logo_url)
     current_art.print_art()
 
 

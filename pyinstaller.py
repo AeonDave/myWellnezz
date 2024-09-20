@@ -1,17 +1,31 @@
-import os
+import errno
 import shutil
 from pathlib import Path
 
 import PyInstaller.__main__
 
+from app.constants import name
+
+
+def remove_directory(path):
+    try:
+        shutil.rmtree(path)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            pass
+        else:
+            raise
+
+
 main_file = 'main.py'
-entry_d = os.path.join(Path(__file__).parent.absolute(), 'mywellnezz')
-entry = os.path.join(entry_d, main_file)
-build_d = os.path.join(Path(__file__).parent.absolute(), 'build')
-# build = os.path.join(build_d, main_file)
-# build_m_d = os.path.join(Path(__file__).parent.absolute(), 'build_m')
-# build_m = os.path.join(build_m_d, main_file)
-ico = '../app.ico'
+base_dir = Path(__file__).parent.absolute()
+entry_d = base_dir / name
+entry = entry_d / main_file
+build_d = base_dir / 'build'
+dist_d = base_dir / 'dist'
+ico = base_dir / '../app.ico'
+remove_directory(build_d)
+remove_directory(dist_d)
 
 
 # def flatten(src, out):
@@ -37,13 +51,13 @@ def install(entry_point=entry):
         '--clean',
         '--optimize=1',
         '--noupx',
-        '--specpath=build'
+        '--specpath=build',
+        f'--copy-metadata={name}',
+        '--copy-metadata=importlib_metadata'
     ])
 
 
 if __name__ == '__main__':
     # minify(entry_d, build_m_d)
     # flatten(build_m, build)
-    # shutil.rmtree(build_m_d)
     install(entry)
-    shutil.rmtree('build')

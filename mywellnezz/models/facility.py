@@ -1,9 +1,9 @@
-import asyncio
+from time import sleep
 from typing import List, Optional
 
 from app.constants import schema, base_url
 from models.usercontext import UserContext
-from modules.http_calls import async_post
+from modules.http_calls import post
 from modules.useragent import fake_ua_android
 
 
@@ -26,7 +26,7 @@ class Facility:
         # self.is_demo: bool = kwargs.get('isDemo')
 
 
-async def my_facilities(user: UserContext) -> Optional[List[Facility]]:
+def my_facilities(user: UserContext) -> Optional[List[Facility]]:
     url = f'{schema}services.{base_url}/Core/User/{user.id}/MyFacilities'
     headers = {
         "User-Agent": fake_ua_android(),
@@ -37,7 +37,7 @@ async def my_facilities(user: UserContext) -> Optional[List[Facility]]:
         "token": f"{user.token}"
     }
     try:
-        response = await async_post(url, headers, payload)
+        response = post(url, headers, payload)
         if response and 'errors' in response:
             print(f'Error: {response["errors"][0]["errorMessage"]}')
             return None
@@ -46,5 +46,5 @@ async def my_facilities(user: UserContext) -> Optional[List[Facility]]:
                                                                       response['data']['facilities']]
     except Exception as ex:
         print(f'Connection Error: {ex}')
-        await asyncio.sleep(30)
+        sleep(20)
     return None

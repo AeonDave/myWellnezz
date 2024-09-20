@@ -1,10 +1,11 @@
+import importlib.metadata
 import platform
 
 import colorama
 
 name = 'myWellnezz'
-author = 'AeonDave'
-version = '1.2.0'
+author = importlib.metadata.metadata(name)['Author']
+version = importlib.metadata.version(name)
 app_id = 'EC1D38D7-D359-48D0-A60C-D8C0B8FB9DF9'
 os = platform.system()
 logo = f'''         

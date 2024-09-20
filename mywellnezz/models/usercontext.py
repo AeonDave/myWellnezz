@@ -1,13 +1,14 @@
 import asyncio
 import re
 from datetime import datetime, timedelta
+from time import sleep
 from typing import List, Optional
 
 import pwinput
 from dateutil import parser, tz
 
 from app.constants import schema, base_url, app_id
-from modules.http_calls import async_post
+from modules.http_calls import post
 from modules.math_util import read_obfuscation, write_obfuscation
 from modules.useragent import fake_ua_android
 
@@ -80,7 +81,7 @@ class UserContext:
         self.token = token.strip()
         self.token_expire = datetime.now() + timedelta(seconds=token_expire)
 
-    async def login_app(self):
+    def login_app(self):
         url = f'{schema}services.{base_url}/Application/{app_id}/Login'
         headers = {
             "User-Agent": fake_ua_android(),
@@ -95,7 +96,7 @@ class UserContext:
             "password": f"{pwd}"
         }
         try:
-            response = await async_post(url, headers, payload)
+            response = post(url, headers, payload)
             if response and 'errors' in response:
                 print(f'Error: {response["errors"][0]["errorMessage"]}')
                 return False, None
@@ -107,11 +108,11 @@ class UserContext:
                 return True, user
         except Exception as ex:
             print(f'Connection Error: {ex}')
-            await asyncio.sleep(30)
+            sleep(20)
         return False, None
 
-    async def refresh(self):
-        return await self.login_app()
+    def refresh(self):
+        return self.login_app()
 
 
 def _get_usr() -> Optional[str]:
@@ -126,13 +127,13 @@ def _get_pwd() -> Optional[str]:
     return pwinput.pwinput(prompt='Insert password: ', mask='*')
 
 
-async def create_user() -> UserContext:
+def create_user() -> UserContext:
     while True:
         user = UserContext()
         while not user.usr:
             user.usr = _get_usr()
         user.pwd = write_obfuscation(user.usr, _get_pwd())
-        logged, usr = await user.login_app()
+        logged, usr = user.login_app()
         if logged:
             usr.pwd = user.pwd
             return usr

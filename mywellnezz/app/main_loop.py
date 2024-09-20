@@ -1,4 +1,5 @@
 import asyncio
+import random
 from datetime import timedelta, datetime
 from typing import Any, Union, Optional
 
@@ -12,7 +13,7 @@ from models.usercontext import create_user, UserContext
 from modules.console_util import print_missing_facility, print_facilities, print_users
 
 
-async def get_config(mw: MyWellnezz) -> Optional[Config]:
+def get_config(mw: MyWellnezz) -> Optional[Config]:
     config = read_config()
     while True:
         print_users(config)
@@ -21,7 +22,7 @@ async def get_config(mw: MyWellnezz) -> Optional[Config]:
             print('Invalid value, retry')
             continue
         if opt - len(config.users) == 0:
-            config = add_user(await create_user())
+            config = add_user(create_user())
             continue
         elif opt - len(config.users) == 1:
             if len(config.users) == 0:
@@ -32,19 +33,18 @@ async def get_config(mw: MyWellnezz) -> Optional[Config]:
         else:
             config.set_user_choice(opt)
         user = config.get_user()
-        if not await set_user_facilities(mw, user, config):
+        if not set_user_facilities(mw, user, config):
             print_missing_facility()
             return None
         if user.token_expire is not None and user.token_expire - timedelta(weeks=8) >= datetime.now():
             break
-        logged, user = await config.get_user().refresh()
+        logged, user = config.get_user().refresh()
         if not logged:
             print('User with invalid credentials')
             remove_user(config.user_choice)
         else:
             config.set_user(user, config.user_choice, True)
             break
-    await asyncio.sleep(0)
     return config
 
 
@@ -59,10 +59,10 @@ def get_input(mw: MyWellnezz, inp: str):
         return 0 if mw.test else abs(int(opt))
 
 
-async def set_user_facilities(mw: MyWellnezz, user: UserContext, config: Config):
-    user.facilities = await my_facilities(user)
+def set_user_facilities(mw: MyWellnezz, user: UserContext, config: Config):
+    user.facilities = my_facilities(user)
     while user.facilities is None:
-        logged, user = await user.login_app()
+        logged, user = user.login_app()
         config = update_user(user)
     if len(user.facilities) == 0:
         return False
@@ -112,7 +112,7 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
         while mw.run:
             try:
                 user = config.get_user()
-                facility = await config.get_facility()
+                facility = config.get_facility()
                 mw.set_event_task(user, facility, config)
                 events = await mw.get_events()
                 if len(events) == 0:
@@ -139,14 +139,27 @@ async def main_loop(mw: MyWellnezz, config: Union[Config, Any]):
 
 
 async def awake():
+    movement = 30
+    wait_for = 60 * 5
+    current_position = mouse.get_position()
+    expected_position = current_position
+
     while True:
-        mouse.move("1", "0", False)
-        await asyncio.sleep(30)
+        await asyncio.sleep(wait_for)
+        current_position = mouse.get_position()
+        if current_position != expected_position:
+            expected_position = current_position
+            continue
+
+        for i in range(3):
+            x_move = random.randint(-movement, movement)
+            y_move = random.randint(-movement, movement)
+            mouse.move(x_move, y_move, absolute=False)
+            await asyncio.sleep(0.5)
 
 
 def main():
-    loop = asyncio.get_event_loop()
-    loop.create_task(awake())
+    asyncio.get_event_loop().create_task(awake())
     mw = MyWellnezz()
-    c = asyncio.run(get_config(mw))
+    c = get_config(mw)
     asyncio.run(main_loop(mw, c), debug=mw.test)
