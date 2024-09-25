@@ -12,7 +12,7 @@ class AsciiArt:
     def __init__(self):
         self.max_height = 40
         self.max_width = 80
-        self.ascii_chars = ["B", "S", "#", "&", "@", "$", "%", "*", "!", ":", ".", " "]
+        self.ascii_chars = ["B", "S", "8", "P", "o", "d", "u", "*", "+", ";", ":", ",", ".", " "]
         self.art: Optional[str] = None
 
     def print_art(self):
@@ -32,7 +32,7 @@ class AsciiArt:
         else:
             h = min(self.max_height, image.height)
             w = int(image.width * self.max_width / image.height)
-        image = image.resize((w, h),  Image.Resampling.LANCZOS)
+        image = image.resize((w, h), Image.Resampling.LANCZOS)
         gray = image.convert('L')
         ascii_img = []
         for i in range(h):
