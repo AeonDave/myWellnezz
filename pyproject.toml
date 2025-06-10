@@ -12,18 +12,18 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.13"
+python = ">=3.12,<3.13"
 prettytable = "^3"
 colorama = "^0.4"
 psutil = "^6"
-aioconsole = "^0.8"
+aioconsole = "^0"
 pillow = "^10"
 pwinput = "^1"
 python-dateutil = "^2"
 loguru = "^0.7"
 pyinstaller = "^6"
-mouse = "^0.7"
-httpx = "^0.27"
+mouse = "^0"
+httpx = "^0"
 
 [tool.poetry.scripts]
 mywellnezz = "mywellnezz.main:start"
