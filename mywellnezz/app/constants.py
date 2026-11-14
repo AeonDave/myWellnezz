@@ -1,27 +1,33 @@
-import importlib.metadata
-import platform
+"""Application constants: metadata, branding and MyWellness API endpoints.
 
-import colorama as c
+The package metadata is available when installed (pip/poetry or the PyInstaller
+build with ``--copy-metadata``); the fallback keeps the CLI working from source.
+"""
+
+try:
+    from importlib.metadata import metadata
+    from importlib.metadata import version as _pkg_version
+
+    _meta = metadata('mywellnezz')
+    author = _meta.get('Author') or 'AeonDave'
+    version = _pkg_version('mywellnezz')
+except Exception:  # noqa: BLE001 — defensive: log and keep going
+    # Keep in sync with pyproject.toml when bumping.
+    author = 'AeonDave'
+    version = '2.2.0'
 
 name = 'myWellnezz'
-author = importlib.metadata.metadata(name)['Author']
-version = importlib.metadata.version(name)
 app_id = 'EC1D38D7-D359-48D0-A60C-D8C0B8FB9DF9'
-os = platform.system()
-logo = f'''         
-{c.Fore.LIGHTBLACK_EX}                   {c.Fore.YELLOW} M""MMM""MMM""M{c.Fore.LIGHTBLACK_EX}          dP dP                                     
-{c.Fore.LIGHTBLACK_EX}                   {c.Fore.YELLOW} M  MMM  MMM  M{c.Fore.LIGHTBLACK_EX}          88 88                                     
-{c.Fore.LIGHTBLACK_EX}88d8b.d8b. dP    dP{c.Fore.YELLOW} M  MMP  MMP  M{c.Fore.LIGHTBLACK_EX} .d8888b. 88 88 88d888b. .d8888b. d888888b d888888b 
-{c.Fore.LIGHTBLACK_EX}88'`88'`88 88    88{c.Fore.YELLOW} M  MM'  MM' .M{c.Fore.LIGHTBLACK_EX} 88ooood8 88 88 88'  `88 88ooood8    .d8P'    .d8P' 
-{c.Fore.LIGHTBLACK_EX}88  88  88 88.  .88{c.Fore.YELLOW} M  `' . '' .MM{c.Fore.LIGHTBLACK_EX} 88.  ... 88 88 88    88 88.  ...  .Y8P     .Y8P    
-{c.Fore.LIGHTBLACK_EX}dP  dP  dP `8888P88{c.Fore.YELLOW} M    .d  .dMMM{c.Fore.LIGHTBLACK_EX} `88888P' dP dP dP    dP `88888P' d888888P d888888P{c.Fore.YELLOW} v{version} by {c.Fore.RED}{author}
-{c.Fore.LIGHTBLACK_EX}                .88{c.Fore.YELLOW} MMMMMMMMMMMMMM{c.Fore.LIGHTBLACK_EX}                                                    
-{c.Fore.LIGHTBLACK_EX}            d8888P {c.Style.RESET_ALL}                                                    
-'''
 
 schema = 'https://'
 base_url = 'mywellness.com'
-api_book = '/v2/enduser/class/book'
-api_search = '/v2/enduser/class/search'
-api_search_app = '/Core/Facility'
-api_book_app = '/Core/CalendarEvent'
+
+logo = '''                   M""MMM""MMM""M          dP dP                                     
+                   M  MMM  MMM  M          88 88                                     
+88d8b.d8b. dP    dP M  MMP  MMP  M .d8888b. 88 88 88d888b. .d8888b. d888888b d888888b 
+88\'`88\'`88 88    88 M  MM\'  MM\' .M 88ooood8 88 88 88\'  `88 88ooood8    .d8P\'    .d8P\' 
+88  88  88 88.  .88 M  `\' . \'\' .MM 88.  ... 88 88 88    88 88.  ...  .Y8P     .Y8P    
+dP  dP  dP `8888P88 M    .d  .dMMM `88888P\' dP dP dP    dP `88888P\' d888888P d888888P 
+                .88 MMMMMMMMMMMMMM                                                    
+            d8888P                                                                   
+'''
