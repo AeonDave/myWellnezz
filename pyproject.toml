@@ -8,7 +8,7 @@ packages = [{ include = "mywellnezz" }]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.16"
-pillow = ">=10"
+pillow = ">=12.1.1"
 python-dateutil = ">=2.9"
 httpx = ">=0.27"
 keyring = ">=25"
