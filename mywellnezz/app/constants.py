@@ -14,7 +14,7 @@ try:
 except Exception:  # noqa: BLE001 — defensive: log and keep going
     # Keep in sync with pyproject.toml when bumping.
     author = 'AeonDave'
-    version = '2.2.0'
+    version = '2.2.1'
 
 name = 'myWellnezz'
 app_id = 'EC1D38D7-D359-48D0-A60C-D8C0B8FB9DF9'

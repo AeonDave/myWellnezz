@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mywellnezz"
-version = "2.2.0"
+version = "2.2.1"
 description = "View and register for gym sessions at fitness centers using the MyWellness app"
 authors = ["AeonDave"]
 readme = "README.md"
